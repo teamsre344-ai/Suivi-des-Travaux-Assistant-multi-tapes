@@ -1,21 +1,29 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *.log
 
-# Envs
+# Virtual envs
 .venv/
 .venv-1/
 env/
+venv/
+
+# Secrets / config
+.env
+.env.*
 *.env
 
-# Django build output
-/staticfiles/
-/media/
+# SQLite / local DBs
 db.sqlite3
+*.sqlite3
 
-# OS/IDE
-.DS_Store
-Thumbs.db
+# Django build/output
+/staticfiles/
+/media/          # uploaded images – DO NOT commit
+
+# IDE/OS
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
