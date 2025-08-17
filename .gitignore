@@ -1,0 +1,21 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.log
+
+# Envs
+.venv/
+.venv-1/
+env/
+*.env
+
+# Django build output
+/staticfiles/
+/media/
+db.sqlite3
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

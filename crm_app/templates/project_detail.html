@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Projet {{ project.project_number }} - CRM{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-bold">{{ project.title }}</h1>
+  <a href="{% url 'project_list' %}" class="text-sm text-blue-600 hover:underline">Retour à la liste</a>
+</div>
+
+<!-- Meta: creator / assignee -->
+<div class="mb-6 bg-white rounded-lg border shadow-sm p-4 text-sm text-gray-700 flex flex-wrap items-center gap-x-4 gap-y-2">
+  <div>
+    Créé par
+    <span class="font-semibold">
+      {{ project.created_by.get_full_name|default:project.created_by.username|default:"—" }}
+    </span>
+    le {{ project.created_at|date:"d/m/Y H:i" }}
+    {% if request.user.is_authenticated and project.created_by_id == request.user.id %}
+      <span class="ml-2 inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+        C'est votre projet
+      </span>
+    {% endif %}
+  </div>
+  {% if project.technician %}
+    <span class="hidden md:inline">•</span>
+    <div>Assigné à <span class="font-semibold">{{ project.technician }}</span></div>
+  {% endif %}
+  <span class="hidden md:inline">•</span>
+  <div>No: <span class="font-mono">{{ project.project_number }}</span></div>
+</div>
+
+<!-- === Phase section === -->
+<div class="bg-white rounded-lg shadow p-4 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-semibold">Phases du projet</h3>
+    <div class="text-sm text-gray-500">{{ project.phases_completed_count }}/3 phases complétées</div>
+  </div>
+
+  <!-- Progress over 3 phases -->
+  <div class="mb-4">
+    <div class="h-2 bg-gray-200 rounded">
+      <div class="h-2 bg-blue-600 rounded" style="width: {{ project.phases_completion_percentage }}%"></div>
+    </div>
+    <div class="text-xs text-gray-500 mt-1">{{ project.phases_completion_percentage }}%</div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Préparation -->
+    <div class="border rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">Préparation</div>
+        <div>
+          {% if project.preparation_phase == 'completed' %}
+            <span class="badge badge-green">Complétée</span>
+          {% elif project.preparation_phase == 'in_progress' %}
+            <span class="badge badge-blue">En cours</span>
+          {% else %}
+            <span class="badge">Non démarrée</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="text-xs text-gray-500 mt-1">
+        {% if project.preparation_started_at %}Démarrée: {{ project.preparation_started_at|date:"d/m/Y H:i" }}{% endif %}
+        {% if project.preparation_completed_at %} · Complétée: {{ project.preparation_completed_at|date:"d/m/Y H:i" }}{% endif %}
+      </div>
+
+      <form method="post" action="{% url 'project_phase_update' project.pk %}" class="mt-3 flex gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="phase" value="preparation">
+        {% if project.preparation_phase == 'not_started' %}
+          <button name="set" value="in_progress" class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">
+            Démarrer
+          </button>
+        {% elif project.preparation_phase == 'in_progress' %}
+          <button name="set" value="completed" class="px-3 py-1.5 rounded-md bg-green-600 text-white text-sm hover:bg-green-700">
+            Marquer complétée
+          </button>
+        {% else %}
+          <button name="set" value="in_progress" class="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50">
+            Réouvrir
+          </button>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Exécution -->
+    <div class="border rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">Exécution</div>
+        <div>
+          {% if project.execution_phase == 'completed' %}
+            <span class="badge badge-green">Complétée</span>
+          {% elif project.execution_phase == 'in_progress' %}
+            <span class="badge badge-blue">En cours</span>
+          {% else %}
+            <span class="badge">Non démarrée</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="text-xs text-gray-500 mt-1">
+        {% if project.execution_started_at %}Démarrée: {{ project.execution_started_at|date:"d/m/Y H:i" }}{% endif %}
+        {% if project.execution_completed_at %} · Complétée: {{ project.execution_completed_at|date:"d/m/Y H:i" }}{% endif %}
+      </div>
+
+      <form method="post" action="{% url 'project_phase_update' project.pk %}" class="mt-3 flex gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="phase" value="execution">
+        {% if project.execution_phase == 'not_started' %}
+          <button {% if project.preparation_phase != 'completed' %}disabled{% endif %}
+                  name="set" value="in_progress"
+                  class="px-3 py-1.5 rounded-md text-sm {% if project.preparation_phase != 'completed' %}bg-gray-200 text-gray-400 cursor-not-allowed{% else %}bg-blue-600 text-white hover:bg-blue-700{% endif %}">
+            Démarrer
+          </button>
+        {% elif project.execution_phase == 'in_progress' %}
+          <button name="set" value="completed" class="px-3 py-1.5 rounded-md bg-green-600 text-white text-sm hover:bg-green-700">
+            Marquer complétée
+          </button>
+        {% else %}
+          <button name="set" value="in_progress" class="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50">
+            Réouvrir
+          </button>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Validation -->
+    <div class="border rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">Validation</div>
+        <div>
+          {% if project.validation_phase == 'completed' %}
+            <span class="badge badge-green">Complétée</span>
+          {% elif project.validation_phase == 'in_progress' %}
+            <span class="badge badge-blue">En cours</span>
+          {% else %}
+            <span class="badge">Non démarrée</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="text-xs text-gray-500 mt-1">
+        {% if project.validation_started_at %}Démarrée: {{ project.validation_started_at|date:"d/m/Y H:i" }}{% endif %}
+        {% if project.validation_completed_at %} · Complétée: {{ project.validation_completed_at|date:"d/m/Y H:i" }}{% endif %}
+      </div>
+
+      <form method="post" action="{% url 'project_phase_update' project.pk %}" class="mt-3 flex gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="phase" value="validation">
+        {% if project.validation_phase == 'not_started' %}
+          <button {% if project.execution_phase != 'completed' %}disabled{% endif %}
+                  name="set" value="in_progress"
+                  class="px-3 py-1.5 rounded-md text-sm {% if project.execution_phase != 'completed' %}bg-gray-200 text-gray-400 cursor-not-allowed{% else %}bg-blue-600 text-white hover:bg-blue-700{% endif %}">
+            Démarrer
+          </button>
+        {% elif project.validation_phase == 'in_progress' %}
+          <button name="set" value="completed" class="px-3 py-1.5 rounded-md bg-green-600 text-white text-sm hover:bg-green-700">
+            Marquer complétée
+          </button>
+        {% else %}
+          <button name="set" value="in_progress" class="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50">
+            Réouvrir
+          </button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- LEFT -->
+  <div class="lg:col-span-2 space-y-6">
+
+    <!-- Informations -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="font-semibold mb-3">Informations</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gray-500">Client:</span> <span class="font-medium">{{ project.client_name }}</span></div>
+        <div><span class="text-gray-500">Produit:</span> <span class="font-medium">{{ project.product }}</span></div>
+        <div><span class="text-gray-500">Environnement:</span> <span class="font-medium">{{ project.get_environment_display }}</span></div>
+        <div><span class="text-gray-500">Type:</span> <span class="font-medium">{{ project.work_type }}</span></div>
+        <div><span class="text-gray-500">Serveur BD:</span> <span class="font-medium">{{ project.db_server }}</span></div>
+        <div><span class="text-gray-500">Serveur App:</span> <span class="font-medium">{{ project.app_server }}</span></div>
+        <div><span class="text-gray-500">Base de données:</span> <span class="font-medium">{{ project.database_name }}</span></div>
+        <div>
+          <span class="text-gray-500">Validations:</span>
+          <span class="ml-1">
+            {% if project.fuse_validation == 'OK' %}
+              <span class="badge badge-green">FUSE OK</span>
+            {% else %}
+              <span class="badge badge-amber">FUSE NOK</span>
+            {% endif %}
+            {% if project.certificate_validation == 'OK' %}
+              <span class="badge badge-green">Cert OK</span>
+            {% else %}
+              <span class="badge badge-amber">Cert NOK</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checklist -->
+    <!-- Checklist header -->
+<div class="mt-6 bg-white rounded-lg border shadow-sm">
+  <div class="px-4 py-3 border-b flex items-center justify-between">
+    <h3 class="font-medium">Checklist</h3>
+    <div class="flex items-center gap-3">
+      <form action="{% url 'checklist_import' project.pk %}" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
+        {% csrf_token %}
+        <input type="file" name="json_file" accept=".json" class="text-sm" required>
+        <button class="btn btn-sm bg-blue-600 text-white px-3 py-1 rounded">Importer JSON</button>
+      </form>
+      <a href="{% url 'project_checklist_pdf' project.pk %}" class="btn btn-sm border px-3 py-1 rounded hover:bg-gray-50">
+        <i class="fa-solid fa-file-pdf mr-1"></i> Export PDF
+      </a>
+    </div>
+  </div>
+
+  <div class="divide-y">
+    {% for it in project.checklist_items.all %}
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start gap-3">
+            <form action="{% url 'checklist_item_toggle' it.id %}" method="post">
+              {% csrf_token %}
+              <input type="hidden" name="completed" value="{% if it.completed %}0{% else %}1{% endif %}">
+              <button class="h-5 w-5 rounded border flex items-center justify-center {% if it.completed %}bg-green-500 text-white{% else %}bg-white{% endif %}">
+                {% if it.completed %}<i class="fa-solid fa-check text-xs"></i>{% endif %}
+              </button>
+            </form>
+            <div>
+              <div class="font-medium {% if it.completed %}line-through text-gray-500{% endif %}">{{ it.label }}</div>
+              {% if it.completed_at %}
+                <div class="text-xs text-gray-400">Complété le {{ it.completed_at|date:"d/m/Y H:i" }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- notes + images -->
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Commentaires</div>
+            <div class="space-y-2">
+              {% for n in it.notes.all %}
+                <div class="p-2 rounded border bg-gray-50">
+                  <div class="text-sm">{{ n.text|linebreaksbr }}</div>
+                  <div class="text-[11px] text-gray-400 mt-1">{{ n.created_at|date:"d/m/Y H:i" }} — {{ n.author.get_full_name|default:n.author.username }}</div>
+                </div>
+              {% empty %}
+                <div class="text-sm text-gray-400">Aucun commentaire.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Images</div>
+            <div class="flex flex-wrap gap-2">
+              {% for img in it.images.all %}
+                <a href="{{ img.image.url }}" target="_blank" class="block">
+                  <img src="{{ img.image.url }}" class="h-20 w-28 object-cover rounded border" alt="">
+                </a>
+              {% empty %}
+                <div class="text-sm text-gray-400">Aucune image.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- add note + photos -->
+        <form action="{% url 'checklist_item_add_note' it.id %}" method="post" enctype="multipart/form-data" class="mt-3 border-t pt-3">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <textarea name="text" rows="2" class="col-span-2 w-full border rounded p-2" placeholder="Ajouter un commentaire (optionnel)"></textarea>
+            <div>
+              <input type="file" name="images" accept="image/*" multiple class="w-full text-sm">
+            </div>
+          </div>
+          <div class="mt-2">
+            <button class="btn btn-sm bg-indigo-600 text-white px-3 py-1 rounded">Enregistrer</button>
+          </div>
+        </form>
+      </div>
+    {% empty %}
+      <div class="p-6 text-sm text-gray-500">Aucune étape. Importez un fichier JSON pour commencer.</div>
+    {% endfor %}
+  </div>
+</div>
+
+
+    <!-- Timeline -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="font-semibold mb-3">Chronologie</h3>
+      <ol class="relative border-s border-gray-200 pl-6">
+        {% for e in project.timeline_entries.all %}
+          <li class="mb-4">
+            <span class="absolute -left-2.5 top-1 h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+            <div class="text-sm">
+              <div class="font-medium">{{ e.event_label }}</div>
+              <div class="text-gray-500">{{ e.event_time|date:"d/m/Y H:i" }} · {{ e.get_environment_display }}</div>
+            </div>
+          </li>
+        {% empty %}
+          <li class="text-sm text-gray-500">Aucun événement.</li>
+        {% endfor %}
+      </ol>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="space-y-6">
+    <!-- Statut global (dérivé) -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="font-semibold mb-3">Statut</h3>
+      {% if project.status == 'completed' %}
+        <span class="badge badge-green"><i class="fa-solid fa-check mr-1"></i>Terminé</span>
+      {% elif project.status == 'in_progress' %}
+        <span class="badge badge-blue"><i class="fa-solid fa-spinner mr-1 animate-spin"></i>En cours</span>
+      {% elif project.status == 'pending' %}
+        <span class="badge badge-amber"><i class="fa-solid fa-clock mr-1"></i>En attente</span>
+      {% elif project.status == 'on_hold' %}
+        <span class="badge"><i class="fa-solid fa-pause mr-1"></i>En pause</span>
+      {% else %}
+        <span class="badge">{{ project.status }}</span>
+      {% endif %}
+      <div class="text-xs text-gray-500 mt-2">Le statut passe à <em>Terminé</em> lorsque Préparation, Exécution et Validation sont toutes <em>Complétées</em>.</div>
+    </div>
+
+    <!-- Ruleset -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-semibold">Règles (RuleSet)</h3>
+        {% if project.ruleset %}
+          <span class="text-xs text-gray-500">clé: {{ project.ruleset.name }}</span>
+        {% endif %}
+      </div>
+
+      {% if project.ruleset %}
+        <div class="text-sm space-y-2">
+          {% if project.ruleset.description %}
+            <p class="text-gray-700">{{ project.ruleset.description }}</p>
+          {% endif %}
+          <div class="grid grid-cols-1 gap-1">
+            {% if project.ruleset.default_environment %}
+              <div><span class="text-gray-500">Env. par défaut:</span> <span class="font-medium">{{ project.ruleset.default_environment }}</span></div>
+            {% endif %}
+            {% if project.ruleset.default_product %}
+              <div><span class="text-gray-500">Produit par défaut:</span> <span class="font-medium">{{ project.ruleset.default_product }}</span></div>
+            {% endif %}
+            {% if project.ruleset.default_work_type %}
+              <div><span class="text-gray-500">Type par défaut:</span> <span class="font-medium">{{ project.ruleset.default_work_type }}</span></div>
+            {% endif %}
+          </div>
+          {% if project.ruleset.tags %}
+            <div class="mt-2 flex flex-wrap gap-2">
+              {% for t in project.ruleset.tags %}
+                <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 border">{{ t }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="text-sm text-gray-500">Aucune règle associée.</div>
+      {% endif %}
+    </div>
+
+    <!-- SRE -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="font-semibold mb-3">SRE</h3>
+      <div class="text-sm">{{ project.sre_name|default:"—" }}</div>
+      <div class="text-sm">{{ project.sre_phone|default:"—" }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Recherche{% if q %} – “{{ q }}”{% endif %}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-bold">Recherche{% if q %} : “{{ q }}”{% endif %}</h1>
+  <form action="{% url 'search' %}" method="get" class="flex items-center gap-2">
+    <input type="text" name="q" value="{{ q }}" placeholder="Rechercher : projet, membre, produit…"
+           class="px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500 w-72" />
+    <button class="inline-flex items-center px-3 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700">
+      <i class="fa-solid fa-magnifying-glass mr-1"></i>Chercher
+    </button>
+  </form>
+</div>
+
+{% if q %}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow p-4 lg:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold">Projets trouvés</h3>
+        <div class="text-sm text-gray-500">{{ total_found|intcomma }} résultat{{ total_found|pluralize:"s" }}</div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Numéro</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Titre</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Technicien</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+              <th class="px-4 py-2"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            {% for p in projects %}
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-2">
+                  <div class="text-blue-600 font-medium">{{ p.project_number }}</div>
+                  <div class="text-xs text-gray-500">{{ p.created_at|date:"d/m/Y" }}</div>
+                </td>
+                <td class="px-4 py-2">{{ p.title }}</td>
+                <td class="px-4 py-2">{{ p.client_name }}</td>
+                <td class="px-4 py-2"><span class="badge badge-blue">{{ p.product }}</span></td>
+                <td class="px-4 py-2">
+                  {% if p.technician %}{{ p.technician.user.first_name }} {{ p.technician.user.last_name }}{% else %}—{% endif %}
+                </td>
+                <td class="px-4 py-2">
+                  {% if p.status == 'completed' %}<span class="badge badge-green">Terminé</span>
+                  {% elif p.status == 'in_progress' %}<span class="badge badge-blue">En cours</span>
+                  {% elif p.status == 'pending' %}<span class="badge badge-amber">En attente</span>
+                  {% else %}<span class="badge">{{ p.status }}</span>{% endif %}
+                </td>
+                <td class="px-4 py-2 text-right">
+                  <a href="{% url 'project_detail' p.pk %}" class="text-blue-600 hover:underline text-sm">Ouvrir</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500">Aucun projet trouvé.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page_obj.has_other_pages %}
+        <div class="flex items-center justify-between mt-4">
+          <a href="?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}"
+             class="px-3 py-2 rounded-md border hover:bg-gray-50 {% if not page_obj.has_previous %}pointer-events-none opacity-50{% endif %}">
+            ← Précédent
+          </a>
+          <div class="text-sm text-gray-500">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</div>
+          <a href="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}"
+             class="px-3 py-2 rounded-md border hover:bg-gray-50 {% if not page_obj.has_next %}pointer-events-none opacity-50{% endif %}">
+            Suivant →
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Matching technicians (quick pivot) -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-lg font-semibold mb-3">Techniciens correspondants</h3>
+      <ul class="divide-y divide-gray-100">
+        {% for t in matched_techs %}
+          <li class="py-2 flex items-center justify-between">
+            <div>
+              <div class="font-medium">{{ t.user.first_name }} {{ t.user.last_name }}</div>
+              <div class="text-xs text-gray-500">{{ t.role }}{% if t.is_manager %} • Manager{% endif %}</div>
+            </div>
+            <a href="{% url 'project_list' %}?tech={{ t.id }}"
+               class="text-blue-600 text-sm hover:underline">{{ t.total|intcomma }} projet{{ t.total|pluralize:"s" }}</a>
+          </li>
+        {% empty %}
+          <li class="py-2 text-sm text-gray-500">Aucun membre trouvé.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% else %}
+  <div class="bg-white rounded-lg shadow p-8 text-center text-gray-600">
+    Tapez un mot-clé pour chercher un projet (titre/numéro/client/produit) ou un membre de l’équipe.
+  </div>
+{% endif %}
+{% endblock %}

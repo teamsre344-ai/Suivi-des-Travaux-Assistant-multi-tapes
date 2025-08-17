@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Tableau de bord - CRM{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-bold">Tableau de bord</h1>
+  <div class="space-x-2">
+    <a href="{% url 'project_create' %}" class="inline-flex items-center bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-700">
+      <i class="fa-solid fa-plus mr-2"></i>Nouveau projet
+    </a>
+    <a href="{% url 'project_list' %}" class="inline-flex items-center border px-3 py-2 rounded-md text-sm hover:bg-gray-50">
+      <i class="fa-solid fa-table mr-2"></i>Liste
+    </a>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+  <!-- Total projets -->
+  <a href="{% url 'project_list' %}" class="kpi-card block">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-sm text-gray-600">Total Projets</p>
+        <h3 class="text-3xl font-bold">{{ total_projects|intcomma }}</h3>
+        <div class="mt-3 text-xs flex items-center space-x-3">
+          <span class="text-gray-600">+ {{ new_this_week|intcomma }} nouveaux cette semaine</span>
+          <span class="inline-flex items-center font-medium {% if total_trend_pct >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+            {% if total_trend_pct >= 0 %}
+              <i class="fa-solid fa-arrow-trend-up mr-1"></i>
+            {% else %}
+              <i class="fa-solid fa-arrow-trend-down mr-1"></i>
+            {% endif %}
+            {{ total_trend_pct }}%
+          </span>
+        </div>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+        <i class="fa-solid fa-folder-open"></i>
+      </span>
+    </div>
+  </a>
+
+  <!-- En attente -->
+  <a href="{% url 'project_list' %}?status=pending" class="kpi-card block">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-sm text-gray-600">En attente</p>
+        <h3 class="text-3xl font-bold text-amber-600">{{ pending_projects|intcomma }}</h3>
+        <div class="mt-3 text-xs flex items-center space-x-3">
+          <span class="text-gray-600">+ {{ pending_new_today|intcomma }} nouveau aujourd'hui</span>
+          <span class="inline-flex items-center font-medium {% if pending_trend_pct >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+            {% if pending_trend_pct >= 0 %}
+              <i class="fa-solid fa-arrow-trend-up mr-1"></i>
+            {% else %}
+              <i class="fa-solid fa-arrow-trend-down mr-1"></i>
+            {% endif %}
+            {{ pending_trend_pct }}%
+          </span>
+        </div>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+        <i class="fa-solid fa-clock"></i>
+      </span>
+    </div>
+  </a>
+
+  <!-- En cours -->
+  <a href="{% url 'project_list' %}?status=in_progress" class="kpi-card block">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-sm text-gray-600">En cours</p>
+        <h3 class="text-3xl font-bold text-blue-600">{{ in_progress_projects|intcomma }}</h3>
+        <div class="mt-3 text-xs flex items-center space-x-3">
+          <span class="text-gray-600">{{ overdue_in_progress|intcomma }} en retard</span>
+          <span class="inline-flex items-center font-medium {% if inprog_trend_pct >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+            {% if inprog_trend_pct >= 0 %}
+              <i class="fa-solid fa-arrow-trend-up mr-1"></i>
+            {% else %}
+              <i class="fa-solid fa-arrow-trend-down mr-1"></i>
+            {% endif %}
+            {{ inprog_trend_pct }}%
+          </span>
+        </div>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+        <i class="fa-solid fa-list-check"></i>
+      </span>
+    </div>
+  </a>
+
+  <!-- Terminés -->
+  <a href="{% url 'project_list' %}?status=completed" class="kpi-card block">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-sm text-gray-600">Terminés</p>
+        <h3 class="text-3xl font-bold text-green-600">{{ completed_projects|intcomma }}</h3>
+        <div class="mt-3 text-xs flex items-center space-x-3">
+          <span class="text-gray-600">{{ completed_this_week|intcomma }} cette semaine</span>
+          <span class="inline-flex items-center font-medium {% if completed_trend_pct >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+            {% if completed_trend_pct >= 0 %}
+              <i class="fa-solid fa-arrow-trend-up mr-1"></i>
+            {% else %}
+              <i class="fa-solid fa-arrow-trend-down mr-1"></i>
+            {% endif %}
+            {{ completed_trend_pct }}%
+          </span>
+        </div>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+        <i class="fa-solid fa-check"></i>
+      </span>
+    </div>
+  </a>
+
+</div>
+
+<!-- Distribution + Right card -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <div class="bg-white rounded-lg shadow p-4 lg:col-span-2">
+    <h3 class="text-lg font-semibold mb-4">Répartition des Produits</h3>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {% for row in product_counts %}
+        <a href="{% url 'project_list' %}?product={{ row.product|urlencode }}" class="p-3 rounded-lg border flex items-center justify-between hover:bg-gray-50">
+          <span class="text-sm">{{ row.product }}</span>
+          <span class="font-semibold">{{ row.c }}</span>
+        </a>
+      {% empty %}
+        <p class="text-sm text-gray-500">Aucune donnée.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Right card: KPIs + DONUT -->
+  <div class="bg-white rounded-2xl border shadow-sm p-5 overflow-hidden">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-lg font-semibold">Flux d’activité (12 mois)</h3>
+        <p class="text-sm text-gray-500">Créations vs. clôtures + ponctualité</p>
+      </div>
+      <a href="{% url 'analytics' %}" class="text-sm text-indigo-600 hover:underline">Voir tout</a>
+    </div>
+
+    <!-- KPIs header -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="kpi-card">
+        <div class="text-xs text-gray-500">Créés (30j)</div>
+        <div class="text-xl font-semibold">{{ last30_created }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="text-xs text-gray-500">Terminés (30j)</div>
+        <div class="text-xl font-semibold">{{ last30_completed }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="text-xs text-gray-500">Ponctualité (90j)</div>
+        <div class="text-xl font-semibold">{{ on_time_rate_90 }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="text-xs text-gray-500">Lead time moyen (90j)</div>
+        <div class="text-xl font-semibold">{{ avg_lead_days_90 }} j</div>
+      </div>
+    </div>
+
+    <!-- Donut by type de travaux (contained) -->
+    <div class="mt-5 rounded-xl border p-4 overflow-hidden">
+      <div class="flex items-center justify-between mb-3">
+        <div class="font-medium text-gray-900">Répartition par type</div>
+        <div class="text-xs text-gray-500">12 derniers mois</div>
+      </div>
+
+      <!-- Two columns on md+, stacked on small; all content stays inside -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+        <!-- Chart area kept centered and bounded -->
+        <div class="min-w-0 flex justify-center">
+          <div class="relative w-full max-w-[340px] aspect-square">
+            <canvas id="worktypeDonut" class="w-full h-full"></canvas>
+            <div id="wt-empty" class="absolute inset-0 hidden items-center justify-center text-sm text-gray-500">
+              Aucune donnée
+            </div>
+          </div>
+        </div>
+
+        <!-- Legend scrolls inside the card if tall -->
+        <div id="wt-legend" class="min-w-0 w-full space-y-2 md:max-h-[260px] overflow-auto pr-1">
+          <!-- rows injected via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent projects table -->
+<div class="bg-white shadow rounded-lg overflow-hidden">
+  <div class="px-4 py-3 border-b flex items-center justify-between">
+    <h3 class="font-medium">Projets récents</h3>
+    <a href="{% url 'project_list' %}" class="text-sm text-blue-600 hover:underline">Voir tout</a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Numéro</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Progression</th>
+          <th class="px-4 py-2"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for p in recent_projects %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2">
+            <div class="text-blue-600 font-medium">{{ p.project_number }}</div>
+            <div class="text-xs text-gray-500">{{ p.created_at|date:"d/m/Y" }}</div>
+          </td>
+          <td class="px-4 py-2">{{ p.client_name }}</td>
+          <td class="px-4 py-2">
+            <a href="{% url 'project_list' %}?product={{ p.product|urlencode }}" class="badge badge-blue hover:underline">{{ p.product }}</a>
+          </td>
+          <td class="px-4 py-2">
+            {% if p.status == 'completed' %}
+              <span class="badge badge-green"><i class="fa-solid fa-check mr-1"></i>Terminé</span>
+            {% elif p.status == 'in_progress' %}
+              <span class="badge badge-blue"><i class="fa-solid fa-spinner mr-1 animate-spin"></i>En cours</span>
+            {% elif p.status == 'pending' %}
+              <span class="badge badge-amber"><i class="fa-solid fa-clock mr-1"></i>En attente</span>
+            {% elif p.status == 'on_hold' %}
+              <span class="badge"><i class="fa-solid fa-pause mr-1"></i>En pause</span>
+            {% else %}
+              <span class="badge">{{ p.status }}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 w-64">
+            <div class="h-2 bg-gray-200 rounded">
+              <div class="h-2 bg-blue-500 rounded" style="width: {{ p.completion_percentage }}%"></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">{{ p.completion_percentage }}%</div>
+          </td>
+          <td class="px-4 py-2 text-right">
+            <a href="{% url 'project_detail' p.pk %}" class="text-blue-600 hover:underline text-sm">Ouvrir</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500">Aucun projet trouvé.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="mt-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <a href="{% url 'project_create' %}" class="flex items-start gap-3 bg-white rounded-lg border shadow-sm p-4 hover:shadow-md transition">
+      <span class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+        <i class="fa-solid fa-diagram-project"></i>
+      </span>
+      <div class="flex-1">
+        <div class="font-semibold">Nouveau Projet</div>
+        <div class="text-sm text-gray-500">Créer un projet vierge</div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-gray-300 mt-1"></i>
+    </a>
+
+    <a href="{% url 'project_list' %}?action=duplicate" class="flex items-start gap-3 bg-white rounded-lg border shadow-sm p-4 hover:shadow-md transition">
+      <span class="h-10 w-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+        <i class="fa-solid fa-clone"></i>
+      </span>
+      <div class="flex-1">
+        <div class="font-semibold">Dupliquer</div>
+        <div class="text-sm text-gray-500">Copier un projet existant</div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-gray-300 mt-1"></i>
+    </a>
+
+    <a href="{% url 'project_list' %}?action=import" class="flex items-start gap-3 bg-white rounded-lg border shadow-sm p-4 hover:shadow-md transition">
+      <span class="h-10 w-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+        <i class="fa-solid fa-file-import"></i>
+      </span>
+      <div class="flex-1">
+        <div class="font-semibold">Importer</div>
+        <div class="text-sm text-gray-500">Depuis un fichier JSON/CSV</div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-gray-300 mt-1"></i>
+    </a>
+
+    <a href="{% url 'project_list' %}?view=stats" class="flex items-start gap-3 bg-white rounded-lg border shadow-sm p-4 hover:shadow-md transition">
+      <span class="h-10 w-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+        <i class="fa-solid fa-chart-line"></i>
+      </span>
+      <div class="flex-1">
+        <div class="font-semibold">Statistiques</div>
+        <div class="text-sm text-gray-500">Générer un rapport</div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-gray-300 mt-1"></i>
+    </a>
+  </div>
+</div>
+
+<!-- Chart.js + donut script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<script>
+(function () {
+  const labels = [{% for l in worktype_labels %}"{{ l|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+  const values = [{% for v in worktype_values %}{{ v }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+  const total  = values.reduce((a,b) => a+b, 0);
+
+  const canvas = document.getElementById('worktypeDonut');
+  if (!canvas) return;
+  const emptyEl = document.getElementById('wt-empty');
+
+  if (!total) {
+    emptyEl.classList.remove('hidden');
+    canvas.classList.add('opacity-30');
+    return;
+  }
+
+  // Palette + (optional) fixed colors by label
+  const colorMap = {
+    "Rehaussement": "#6366F1",
+    "Mise a niveau": "#22C55E",
+    "Migration": "#F59E0B",
+    "Demenagement": "#EF4444",
+    "Copie de BD": "#06B6D4",
+    "Installation poste de Support": "#84CC16",
+  };
+  const palette = ['#6366F1','#22C55E','#F59E0B','#EF4444','#14B8A6','#8B5CF6','#06B6D4','#84CC16','#E11D48','#0EA5E9'];
+  const bgColors = labels.map((l,i) => colorMap[l] || palette[i % palette.length]);
+
+  // Legend (contained, clickable)
+  const legend = document.getElementById('wt-legend');
+  legend.innerHTML = '';
+  labels.forEach((label, i) => {
+    const count = values[i];
+    const pct = Math.round(count * 100 / total);
+    const row = document.createElement('a');
+    row.href = "{% url 'project_list' %}?work_type=" + encodeURIComponent(label);
+    row.className =
+      'flex items-center gap-3 p-2 rounded-lg border bg-white/60 hover:bg-white hover:shadow-sm transition ' +
+      'focus:outline-none focus:ring-2 focus:ring-indigo-200';
+    row.title = label;
+    row.innerHTML = `
+      <span class="inline-block h-3 w-3 rounded-full" style="background:${bgColors[i]}"></span>
+      <span class="text-sm text-gray-700 flex-1 truncate">${label}</span>
+      <span class="text-sm font-semibold text-gray-900">${pct}% <span class="text-gray-400">(${count})</span></span>
+    `;
+    legend.appendChild(row);
+  });
+
+  // Chart sized by its container (aspect-square)
+  const ctx = canvas.getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: bgColors,
+        borderColor: 'white',
+        borderWidth: 2,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const v = ctx.parsed;
+              const pct = Math.round(v * 100 / total);
+              return `${ctx.label}: ${v} (${pct}%)`;
+            }
+          }
+        }
+      }
+    },
+    plugins: [{
+      id: 'centerText',
+      afterDraw(c) {
+        const {ctx} = c;
+        const meta = c.getDatasetMeta(0);
+        if (!meta || !meta.data || !meta.data.length) return;
+        const center = meta.data[0];
+        const x = center.x, y = center.y;
+
+        ctx.save();
+        ctx.fillStyle = '#111827';
+        ctx.textAlign = 'center';
+        ctx.font = '600 12px system-ui, -apple-system, Segoe UI, Inter, Roboto';
+        ctx.fillText('Total', x, y - 6);
+        ctx.font = '700 18px system-ui, -apple-system, Segoe UI, Inter, Roboto';
+        ctx.fillText(String(total), x, y + 16);
+        ctx.restore();
+      }
+    }]
+  });
+
+  // Click slice => filter by work_type
+  canvas.addEventListener('click', (evt) => {
+    const points = chart.getElementsAtEventForMode(evt, 'nearest', {intersect: true}, true);
+    if (!points.length) return;
+    const idx = points[0].index;
+    const type = labels[idx];
+    window.location.href = "{% url 'project_list' %}?work_type=" + encodeURIComponent(type);
+  });
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Projets - CRM{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-3xl font-extrabold tracking-tight">Projets</h1>
+  <a href="{% url 'project_create' %}"
+     class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 text-white px-4 py-2 shadow-sm hover:bg-indigo-700">
+    <i class="fa-solid fa-plus"></i> Nouveau projet
+  </a>
+</div>
+
+<!-- Quick status chips -->
+<div class="flex flex-wrap gap-2 mb-4">
+  {% with current=status %}
+    {% for code,label in project.STATUS_CHOICES %}
+      {# we don't have project in context; hard-code statuses: #}
+    {% endfor %}
+  {% endwith %}
+  <a href="{% url 'project_list' %}"
+     class="badge bg-gray-100 text-gray-700 hover:bg-gray-200">Tous</a>
+  <a href="?status=pending"
+     class="badge {% if status == 'pending' %}bg-amber-200 text-amber-800{% else %}bg-amber-100 text-amber-800 hover:bg-amber-200{% endif %}">
+    En attente ({{ status_map.pending|default:0 }})
+  </a>
+  <a href="?status=in_progress"
+     class="badge {% if status == 'in_progress' %}bg-blue-200 text-blue-800{% else %}bg-blue-100 text-blue-800 hover:bg-blue-200{% endif %}">
+    En cours ({{ status_map.in_progress|default:0 }})
+  </a>
+  <a href="?status=completed"
+     class="badge {% if status == 'completed' %}bg-green-200 text-green-800{% else %}bg-green-100 text-green-800 hover:bg-green-200{% endif %}">
+    Terminés ({{ status_map.completed|default:0 }})
+  </a>
+  <a href="?status=on_hold"
+     class="badge {% if status == 'on_hold' %}bg-gray-300 text-gray-800{% else %}bg-gray-200 text-gray-800 hover:bg-gray-300{% endif %}">
+    En pause ({{ status_map.on_hold|default:0 }})
+  </a>
+  <a href="?status=cancelled"
+     class="badge {% if status == 'cancelled' %}bg-red-200 text-red-800{% else %}bg-red-100 text-red-800 hover:bg-red-200{% endif %}">
+    Annulés ({{ status_map.cancelled|default:0 }})
+  </a>
+</div>
+
+<!-- Filter bar -->
+<form method="get" class="bg-white rounded-2xl border shadow-sm p-4 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+    <!-- Status -->
+    <div class="lg:col-span-2">
+      <select name="status" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
+        <option value="">Tous les statuts</option>
+        <option value="pending" {% if status == 'pending' %}selected{% endif %}>En attente</option>
+        <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>En cours</option>
+        <option value="completed" {% if status == 'completed' %}selected{% endif %}>Terminés</option>
+        <option value="on_hold" {% if status == 'on_hold' %}selected{% endif %}>En pause</option>
+        <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Annulés</option>
+      </select>
+    </div>
+
+    <!-- Environment -->
+    <div class="lg:col-span-2">
+      <select name="environment" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
+        <option value="">Tous environnements</option>
+        <option value="test" {% if environment == 'test' %}selected{% endif %}>Test</option>
+        <option value="prod" {% if environment == 'prod' %}selected{% endif %}>Production</option>
+      </select>
+    </div>
+
+    <!-- Product -->
+    <div class="lg:col-span-2">
+      <select name="product" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
+        <option value="">Produit (ex: GRF)</option>
+        {% for p in products %}
+          <option value="{{ p }}" {% if product == p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Search -->
+    <div class="lg:col-span-3">
+      <input type="text" name="q" value="{{ q }}"
+             placeholder="Chercher (client / no / produit / membre / règles)…"
+             class="w-full h-11 rounded-full border-gray-300 pl-4 pr-4 focus:ring-indigo-200 focus:border-indigo-400" />
+    </div>
+
+    <!-- Created by me / assigned to me -->
+    <div class="lg:col-span-3 flex items-center gap-4">
+      <label class="inline-flex items-center gap-2">
+        <input type="checkbox" name="created_by_me" {% if created_by_me %}checked{% endif %}
+               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+        <span class="text-sm">Créés par moi</span>
+      </label>
+      <label class="inline-flex items-center gap-2">
+        <input type="checkbox" name="assigned_to_me" {% if assigned_to_me %}checked{% endif %}
+               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+        <span class="text-sm">Assignés à moi</span>
+      </label>
+    </div>
+
+    <!-- Date from -->
+    <div class="lg:col-span-2">
+      <input type="date" name="date_from" value="{{ date_from }}"
+             class="w-full h-11 rounded-xl border-gray-300 px-3 focus:ring-indigo-200 focus:border-indigo-400" />
+      <div class="text-[11px] text-gray-400 mt-0.5">Du</div>
+    </div>
+
+    <!-- Date to -->
+    <div class="lg:col-span-2">
+      <input type="date" name="date_to" value="{{ date_to }}"
+             class="w-full h-11 rounded-xl border-gray-300 px-3 focus:ring-indigo-200 focus:border-indigo-400" />
+      <div class="text-[11px] text-gray-400 mt-0.5">Au</div>
+    </div>
+
+    <!-- Sort -->
+    <div class="lg:col-span-2">
+      <select name="sort" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
+        <option value="created_desc" {% if sort == 'created_desc' %}selected{% endif %}>Plus récents</option>
+        <option value="created_asc" {% if sort == 'created_asc' %}selected{% endif %}>Plus anciens</option>
+        <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>Date projet ↓</option>
+        <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>Date projet ↑</option>
+        <option value="client_az" {% if sort == 'client_az' %}selected{% endif %}>Client A→Z</option>
+        <option value="client_za" {% if sort == 'client_za' %}selected{% endif %}>Client Z→A</option>
+        <option value="product_az" {% if sort == 'product_az' %}selected{% endif %}>Produit A→Z</option>
+        <option value="product_za" {% if sort == 'product_za' %}selected{% endif %}>Produit Z→A</option>
+        <option value="status" {% if sort == 'status' %}selected{% endif %}>Statut</option>
+      </select>
+    </div>
+
+    <!-- Per page -->
+<div class="lg:col-span-1">
+  <select name="per_page" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
+    {% for n in per_page_choices %}
+      <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}/page</option>
+    {% endfor %}
+  </select>
+</div>
+
+
+    <!-- Buttons -->
+    <div class="lg:col-span-3 flex items-center gap-3">
+      <button class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 text-white px-4 h-11 shadow-sm hover:bg-indigo-700">
+        <i class="fa-solid fa-filter"></i> Filtrer
+      </button>
+      <a href="{% url 'project_list' %}" class="text-sm text-gray-500 hover:text-gray-700">Réinitialiser</a>
+
+      {# Export keeps current filters; we add export=1 #}
+      <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}export=1"
+         class="ml-auto inline-flex items-center gap-2 rounded-xl border px-3 h-11 hover:bg-gray-50">
+        <i class="fa-solid fa-file-csv"></i> Export CSV
+      </a>
+    </div>
+  </div>
+</form>
+
+<!-- Table -->
+<div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+          <th class="px-4 py-2">Numéro</th>
+          <th class="px-4 py-2">Client</th>
+          <th class="px-4 py-2">Produit</th>
+          <th class="px-4 py-2">Env.</th>
+          <th class="px-4 py-2">Technicien</th>
+          <th class="px-4 py-2">Statut</th>
+          <th class="px-4 py-2">Progression</th>
+          <th class="px-4 py-2">Créé le</th>
+          <th class="px-4 py-2"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for p in projects %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2">
+            <div class="text-blue-600 font-medium">{{ p.project_number }}</div>
+            <div class="text-xs text-gray-500">{{ p.title|default:"—" }}</div>
+          </td>
+          <td class="px-4 py-2">{{ p.client_name }}</td>
+          <td class="px-4 py-2"><span class="badge bg-blue-100 text-blue-800">{{ p.product }}</span></td>
+          <td class="px-4 py-2">
+            <span class="badge {% if p.environment == 'prod' %}bg-green-100 text-green-800{% else %}bg-gray-200 text-gray-800{% endif %}">
+              {{ p.get_environment_display }}
+            </span>
+          </td>
+          <td class="px-4 py-2">
+            {% if p.technician %}
+              {{ p.technician.user.first_name }} {{ p.technician.user.last_name }}
+            {% else %}
+              <span class="text-gray-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2">
+            {% if p.status == 'completed' %}
+              <span class="badge bg-green-100 text-green-800">Terminé</span>
+            {% elif p.status == 'in_progress' %}
+              <span class="badge bg-blue-100 text-blue-800">En cours</span>
+            {% elif p.status == 'pending' %}
+              <span class="badge bg-amber-100 text-amber-800">En attente</span>
+            {% elif p.status == 'on_hold' %}
+              <span class="badge bg-gray-200 text-gray-800">En pause</span>
+            {% elif p.status == 'cancelled' %}
+              <span class="badge bg-red-100 text-red-800">Annulé</span>
+            {% else %}
+              <span class="badge bg-gray-100 text-gray-700">{{ p.status }}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 w-56">
+            <div class="h-2 bg-gray-200 rounded">
+              <div class="h-2 bg-indigo-500 rounded" style="width: {{ p.completion_percentage }}%"></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">{{ p.completion_percentage }}%</div>
+          </td>
+          <td class="px-4 py-2 text-sm text-gray-600">
+            {{ p.created_at|date:"d/m/Y H:i" }}
+          </td>
+          <td class="px-4 py-2 text-right">
+            <a href="{% url 'project_detail' p.pk %}" class="text-indigo-600 hover:underline text-sm">Ouvrir</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="px-4 py-10 text-center text-gray-500">Aucun projet trouvé avec ces filtres.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-t">
+    <div class="text-sm text-gray-600">
+      {% if page_obj.paginator.count %}
+        Affichage
+        {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        sur {{ page_obj.paginator.count }}
+      {% else %}
+        0 résultat
+      {% endif %}
+    </div>
+    <div class="flex items-center gap-1">
+      {% if page_obj.has_previous %}
+        <a class="px-3 h-9 inline-flex items-center rounded-lg border hover:bg-white"
+           href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|default:'' }}">Préc.</a>
+      {% else %}
+        <span class="px-3 h-9 inline-flex items-center rounded-lg border bg-gray-100 text-gray-400">Préc.</span>
+      {% endif %}
+
+      <span class="px-3 h-9 inline-flex items-center rounded-lg border bg-white">
+        Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a class="px-3 h-9 inline-flex items-center rounded-lg border hover:bg-white"
+           href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|default:'' }}">Suiv.</a>
+      {% else %}
+        <span class="px-3 h-9 inline-flex items-center rounded-lg border bg-gray-100 text-gray-400">Suiv.</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

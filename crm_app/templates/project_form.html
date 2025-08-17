@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Nouveau Projet - CRM{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Nouveau Projet</h1>
+<form method="post" class="bg-white rounded-lg shadow p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+  {% csrf_token %}
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Numéro de projet</label>
+    <input name="project_number" class="tw-input" required/>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Client</label>
+    <input name="client_name" class="tw-input" required/>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Environnement</label>
+    <select name="environment" class="tw-input" required>
+      <option value="test">Test</option>
+      <option value="prod">Production</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Produit</label>
+    <select name="product" class="tw-input">
+      <option>GRF</option><option>GRM</option><option>GFM</option><option>Clinibase CI</option><option>GRH</option><option>eClinibase</option><option>SIurge</option><option>Sicheld</option><option>Med Echo</option><option>I-CLSC</option><option>RadImage</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Type de travaux</label>
+    <select name="work_type" class="tw-input">
+      <option>Migration</option><option>Mise a niveau</option><option>Rehaussement</option><option>Demenagement</option><option>Copie de BD</option><option>Installation poste de Support</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Serveur BD</label>
+    <input name="db_server" class="tw-input" required/>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Serveur App</label>
+    <input name="app_server" class="tw-input" required/>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Nom de la BD</label>
+    <input name="database_name" class="tw-input" required/>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Validation FUSE</label>
+    <select name="fuse_validation" class="tw-input"><option>OK</option><option selected>NOK</option></select>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Validation Certificat</label>
+    <select name="certificate_validation" class="tw-input"><option>OK</option><option selected>NOK</option></select>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-600 mb-1">Statut</label>
+    <select name="status" class="tw-input">
+      <option value="pending">En attente</option>
+      <option value="in_progress">En cours</option>
+      <option value="completed">Terminé</option>
+      <option value="on_hold">En pause</option>
+      <option value="cancelled">Annulé</option>
+    </select>
+  </div>
+  <div class="md:col-span-2 flex justify-end">
+    <button class="bg-blue-600 text-white px-4 py-2 rounded-md">Créer</button>
+  </div>
+</form>
+{% endblock %}

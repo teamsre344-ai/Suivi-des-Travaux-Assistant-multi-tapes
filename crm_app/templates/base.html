@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}CRM{% endblock %}</title>
+
+  <!-- Tailwind + Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Tailwind runtime tweaks -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { brand: '#2563eb', brand2: '#111827' }
+        }
+      }
+    };
+  </script>
+
+  <!-- Small utility CSS (no @apply so it works with CDN) -->
+  <style>
+    .tw-container { max-width: 1200px; margin: 0 auto; }
+    .badge { display:inline-flex; align-items:center; font-size:.75rem; line-height:1; padding:.25rem .5rem; border-radius:9999px; }
+    .badge-green { background:#dcfce7; color:#166534; }
+    .badge-blue  { background:#dbeafe; color:#1e40af; }
+    .badge-amber { background:#fde68a; color:#92400e; }
+    .kpi-card { background:#fff; padding:1rem; border-radius:.75rem; box-shadow:0 1px 2px rgba(16,24,40,.06); transition:box-shadow .2s ease; }
+    .kpi-card:hover { box-shadow:0 6px 14px rgba(16,24,40,.12); }
+    .tw-input { width:100%; border:1px solid #e5e7eb; border-radius:.5rem; padding:.5rem .75rem; outline:none; }
+    .tw-input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.25); }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+
+  <!-- HEADER / NAV -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
+    <div class="tw-container px-4">
+      <!-- On md+ we use 3 columns: Left (brand + nav) / Center (search) / Right (user) -->
+      <div class="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 items-center h-16">
+
+        <!-- LEFT: Brand + Primary Nav -->
+        <div class="flex items-center gap-8">
+          <!-- Brand -->
+          <a href="{% url 'home' %}" class="flex items-center gap-3 shrink-0">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-500 text-white shadow-sm">
+              <i class="fa-solid fa-chart-simple text-lg"></i>
+            </span>
+            <span class="text-xl font-semibold tracking-tight">SRE Track</span>
+          </a>
+
+          <!-- Nav -->
+          {% with url_name=request.resolver_match.url_name %}
+          <nav class="hidden md:flex items-center gap-6 text-[15px]">
+            <a href="{% url 'home' %}"
+               class="transition hover:text-indigo-600 {% if url_name == 'home' %}text-indigo-600 font-semibold{% else %}text-gray-900{% endif %}">
+              Tableau de bord
+            </a>
+
+            <a href="{% url 'project_list' %}"
+               class="transition hover:text-indigo-600 {% if url_name == 'project_list' %}text-indigo-600 font-semibold{% else %}text-gray-900{% endif %}">
+              Projets
+            </a>
+
+            {% if technician and technician.is_manager %}
+            <a href="{% url 'team_dashboard' %}"
+               class="transition hover:text-indigo-600 {% if url_name == 'team_dashboard' %}text-indigo-600 font-semibold{% else %}text-gray-900{% endif %}">
+              Équipe
+            </a>
+            {% endif %}
+          </nav>
+          {% endwith %}
+        </div>
+
+        <!-- CENTER: Global Search -->
+        <div class="flex md:justify-center">
+          <form action="{% url 'search' %}" method="get" class="w-full md:max-w-xl">
+            <div class="relative flex items-center">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-400"></i>
+              <input
+                type="text"
+                name="q"
+                value="{{ request.GET.q|default_if_none:'' }}"
+                placeholder="Rechercher : projet, membre, produit…"
+                class="w-full h-11 pl-11 pr-28 rounded-full border border-gray-200 bg-white/80 hover:bg-white focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition"
+                autocomplete="off" />
+              <button type="submit"
+                class="absolute right-1 h-9 px-4 rounded-full bg-indigo-600 text-white font-medium shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition">
+                Chercher
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- RIGHT: Profile chip (no name) + Logout -->
+        <div class="flex items-center justify-between md:justify-end gap-3">
+
+          <!-- Profile chip (click to open /profile/) -->
+          <a href="{% url 'profile' %}"
+             class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 transition"
+             title="Mon profil" aria-label="Mon profil">
+            {% if technician and technician.avatar_url %}
+              <img src="{{ technician.avatar_url }}" alt="avatar"
+                   class="h-10 w-10 rounded-full object-cover" />
+            {% else %}
+              {% if request.user.first_name or request.user.last_name %}
+                {{ request.user.first_name|slice:":1" }}{{ request.user.last_name|slice:":1" }}
+              {% else %}
+                {{ request.user.username|slice:":2" }}
+              {% endif %}
+            {% endif %}
+          </a>
+
+          <!-- Logout -->
+          <a href="{% url 'logout' %}"
+             class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
+             title="Se déconnecter" aria-label="Se déconnecter">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="tw-container px-4 py-6">
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for m in messages %}
+          <div class="p-3 rounded border
+                      {% if m.level_tag == 'success' %} bg-green-50 text-green-700 border-green-200
+                      {% elif m.level_tag == 'warning' %} bg-amber-50 text-amber-800 border-amber-200
+                      {% elif m.level_tag == 'error' %} bg-red-50 text-red-700 border-red-200
+                      {% else %} bg-blue-50 text-blue-800 border-blue-200
+                      {% endif %}">
+            {{ m }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t bg-white mt-12">
+    <div class="tw-container px-4 py-4 text-sm text-gray-500 flex items-center justify-between">
+      <span>&copy; {{ now|date:"Y" }}LGI Healthcare Solutions | LGI Solutions Santé </span>
+      <div class="space-x-3">
+        <a class="hover:text-brand" href="https://www.linkedin.com/company/lgisolutions/about/"><i class="fa-brands fa-linkedin"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

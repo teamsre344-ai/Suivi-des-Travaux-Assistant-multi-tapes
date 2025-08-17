@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-white rounded-2xl border shadow-sm p-5 mb-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 text-xl font-bold">
+        {% if technician.avatar_url %}
+          <img src="{{ technician.avatar_url }}" alt="avatar" class="h-14 w-14 rounded-2xl object-cover">
+        {% else %}
+          {{ technician.initials }}
+        {% endif %}
+      </span>
+      <div>
+        <div class="text-xl font-semibold">
+          {{ request.user.get_full_name|default:request.user.username }}
+        </div>
+        <div class="text-sm text-gray-500">
+          {{ technician.title|default:"Technicien" }}
+          {% if technician.location %} • {{ technician.location }}{% endif %}
+          {% if technician.phone %} • {{ technician.phone }}{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'project_create' %}"
+         class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 text-white px-4 py-2 shadow-sm hover:bg-indigo-700">
+        <i class="fa-solid fa-plus"></i> Nouveau projet
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="kpi-card">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600">Mes projets</p>
+        <h3 class="text-3xl font-bold">{{ total|intcomma }}</h3>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+        <i class="fa-solid fa-folder-open"></i>
+      </span>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600">En cours</p>
+        <h3 class="text-3xl font-bold text-blue-600">{{ doing|intcomma }}</h3>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+        <i class="fa-solid fa-list-check"></i>
+      </span>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600">Terminés</p>
+        <h3 class="text-3xl font-bold text-green-600">{{ done|intcomma }}</h3>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+        <i class="fa-solid fa-circle-check"></i>
+      </span>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600">Livraison à l’heure</p>
+        <h3 class="text-3xl font-bold {% if on_time_rate >= 75 %}text-green-600{% elif on_time_rate >= 50 %}text-amber-600{% else %}text-red-600{% endif %}">
+          {{ on_time_rate }}%
+        </h3>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+        <i class="fa-solid fa-clock"></i>
+      </span>
+    </div>
+    <div class="mt-2 text-xs text-gray-500">
+      Moyenne checklist: {{ completion_avg }}%
+    </div>
+  </div>
+</div>
+
+<!-- Product mix + recent -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <div class="bg-white rounded-2xl border shadow-sm p-4 lg:col-span-1">
+    <h3 class="font-semibold mb-3">Produits les plus fréquents</h3>
+    <div class="space-y-2">
+      {% for row in product_counts %}
+        <div class="flex items-center justify-between rounded-lg border px-3 py-2">
+          <span class="text-sm">{{ row.product }}</span>
+          <span class="font-semibold">{{ row.c }}</span>
+        </div>
+      {% empty %}
+        <div class="text-sm text-gray-500">Aucune donnée.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border shadow-sm p-4 lg:col-span-2">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold">Projets récents (assignés)</h3>
+      <a href="{% url 'project_list' %}?assigned_to_me=on" class="text-sm text-indigo-600 hover:underline">Voir tout</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full">
+        <thead class="text-xs uppercase text-gray-500">
+          <tr>
+            <th class="text-left py-2 pr-4">No</th>
+            <th class="text-left py-2 pr-4">Client</th>
+            <th class="text-left py-2 pr-4">Produit</th>
+            <th class="text-left py-2 pr-4">Statut</th>
+            <th class="text-left py-2 pr-4">Progression</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          {% for p in recent_assigned %}
+          <tr class="hover:bg-gray-50">
+            <td class="py-2 pr-4 text-indigo-600 font-medium">{{ p.project_number }}</td>
+            <td class="py-2 pr-4">{{ p.client_name }}</td>
+            <td class="py-2 pr-4">{{ p.product }}</td>
+            <td class="py-2 pr-4">
+              {% if p.status == 'completed' %}<span class="badge badge-green">Terminé</span>
+              {% elif p.status == 'in_progress' %}<span class="badge badge-blue">En cours</span>
+              {% elif p.status == 'pending' %}<span class="badge badge-amber">En attente</span>
+              {% else %}<span class="badge">{{ p.status }}</span>{% endif %}
+            </td>
+            <td class="py-2 pr-4 w-48">
+              <div class="h-2 bg-gray-200 rounded">
+                <div class="h-2 bg-indigo-500 rounded" style="width: {{ p.completion_percentage }}%"></div>
+              </div>
+            </td>
+            <td class="py-2 text-right">
+              <a href="{% url 'project_detail' p.pk %}" class="text-indigo-600 hover:underline text-sm">Ouvrir</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td class="py-6 text-gray-500" colspan="6">Aucun projet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Also show projects created by me -->
+<div class="bg-white rounded-2xl border shadow-sm p-4">
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="font-semibold">Projets récents (créés par moi)</h3>
+    <a href="{% url 'project_list' %}?created_by_me=on" class="text-sm text-indigo-600 hover:underline">Voir tout</a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full">
+      <thead class="text-xs uppercase text-gray-500">
+        <tr>
+          <th class="text-left py-2 pr-4">No</th>
+          <th class="text-left py-2 pr-4">Client</th>
+          <th class="text-left py-2 pr-4">Produit</th>
+          <th class="text-left py-2 pr-4">Assigné à</th>
+          <th class="text-left py-2 pr-4">Créé le</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for p in recent_created %}
+        <tr class="hover:bg-gray-50">
+          <td class="py-2 pr-4 text-indigo-600 font-medium">{{ p.project_number }}</td>
+          <td class="py-2 pr-4">{{ p.client_name }}</td>
+          <td class="py-2 pr-4">{{ p.product }}</td>
+          <td class="py-2 pr-4">
+            {% if p.technician %}{{ p.technician }}{% else %}<span class="text-gray-400">—</span>{% endif %}
+          </td>
+          <td class="py-2 pr-4">{{ p.created_at|date:"d/m/Y H:i" }}</td>
+          <td class="py-2 text-right">
+            <a href="{% url 'project_detail' p.pk %}" class="text-indigo-600 hover:underline text-sm">Ouvrir</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td class="py-6 text-gray-500" colspan="6">Aucun projet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

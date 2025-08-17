@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Connexion - CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+  <div class="bg-white shadow-xl rounded-xl p-8 w-full max-w-md">
+    <div class="flex items-center justify-center mb-4">
+      <div class="h-10 w-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+        <i class="fa-solid fa-chart-simple"></i>
+      </div>
+      <h1 class="ml-3 text-xl font-semibold">CRM</h1>
+    </div>
+    <h2 class="text-lg font-semibold mb-2">Connexion</h2>
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Nom d’utilisateur ou e-mail</label>
+        <input type="text" name="identifier" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" required/>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Mot de passe</label>
+        <input type="password" name="password" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" required/>
+      </div>
+      <button class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Se connecter</button>
+    </form>
+    {% if messages %}
+      <div class="mt-4 space-y-2">
+        {% for m in messages %}
+          <div class="p-2 text-sm rounded bg-red-50 text-red-700">{{ m }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <p class="mt-6 text-xs text-gray-500">Utilisateurs de démo: utilisez l'email semé et le mot de passe <span class="font-semibold">ChangeMe2025!</span>.</p>
+  </div>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</body>
+</html>

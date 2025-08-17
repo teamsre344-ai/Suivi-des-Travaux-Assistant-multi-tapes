@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<meta charset="utf-8">
+<style>
+  body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; }
+  h1 { font-size: 18px; margin-bottom: 6px; }
+  .muted { color:#666; }
+  .item { margin: 10px 0; padding:8px; border:1px solid #ddd; border-radius:6px; }
+  .thumb { height:80px; width:120px; object-fit:cover; border:1px solid #ccc; margin:2px; }
+  .badge { display:inline-block; padding:2px 6px; border-radius:10px; font-size:10px; }
+  .badge-green { background:#DCFCE7; color:#166534; }
+  .badge-gray { background:#E5E7EB; color:#374151; }
+</style>
+<body>
+  <h1>Checklist — {{ project.project_number }}</h1>
+  <div class="muted">
+    Client: {{ project.client_name }} — Produit: {{ project.product }} — Type: {{ project.get_work_type_display }}
+    <br>Généré le {{ generated_at|date:"d/m/Y H:i" }} par {{ user.get_full_name|default:user.username }}
+  </div>
+
+  {% for it in items %}
+    <div class="item">
+      <div>
+        <strong>{{ forloop.counter }}. {{ it.label }}</strong>
+        {% if it.completed %}
+          <span class="badge badge-green">Terminé</span>
+        {% else %}
+          <span class="badge badge-gray">Non terminé</span>
+        {% endif %}
+      </div>
+      {% if it.completed_at %}
+        <div class="muted">Complété le {{ it.completed_at|date:"d/m/Y H:i" }}</div>
+      {% endif %}
+
+      {% if it.notes.all %}
+        <div style="margin-top:6px;"><em>Commentaires</em></div>
+        <ul>
+          {% for n in it.notes.all %}
+            <li>{{ n.text|linebreaksbr }} <span class="muted">— {{ n.created_at|date:"d/m/Y H:i" }}</span></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if it.images.all %}
+        <div style="margin-top:6px;"><em>Images</em></div>
+        <div>
+          {% for img in it.images.all %}
+            <img src="{{ img.image.path }}" class="thumb">
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</body>
+</html>
