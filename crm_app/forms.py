@@ -1,32 +1,39 @@
 from django import forms
 from .models import Project
 
-# ✅ Custom widget that supports multiple file selection
-class MultipleImageInput(forms.ClearableFileInput):
-    allow_multiple_selected = True
+# ---------- Passwordless ----------
+class PasswordlessLoginForm(forms.Form):
+    email = forms.EmailField(
+        label="Adresse e-mail",
+        widget=forms.EmailInput(attrs={
+            "autocomplete": "email",
+            "placeholder": "prenom.nom@lgisolutions.com",
+            "class": "tw-input w-full",
+        })
+    )
+
+# Keep old import sites happy if anything still imports LoginForm
+LoginForm = PasswordlessLoginForm
 
 
-class LoginForm(forms.Form):
-    identifier = forms.CharField(label='Nom d’utilisateur ou e-mail')
-    password = forms.CharField(widget=forms.PasswordInput, label='Mot de passe')
-
-
+# ---------- Project form ----------
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
         fields = [
-            'project_number', 'environment', 'client_name', 'product', 'work_type',
-            'database_name', 'db_server', 'app_server', 'fuse_validation', 'certificate_validation',
-            'status', 'sre_name', 'sre_phone',
+            'project_number','environment','client_name','product','work_type',
+            'database_name','db_server','app_server','fuse_validation','certificate_validation',
+            'status','sre_name','sre_phone',
         ]
         widgets = {
-            'environment': forms.Select(attrs={'class': 'tw-input'}),
-            'product': forms.Select(attrs={'class': 'tw-input'}),
-            'work_type': forms.Select(attrs={'class': 'tw-input'}),
-            'status': forms.Select(attrs={'class': 'tw-input'}),
+            'environment': forms.Select(attrs={'class':'tw-input'}),
+            'product': forms.Select(attrs={'class':'tw-input'}),
+            'work_type': forms.Select(attrs={'class':'tw-input'}),
+            'status': forms.Select(attrs={'class':'tw-input'}),
         }
 
 
+# ---------- Checklist JSON upload ----------
 class ChecklistJSONUploadForm(forms.Form):
     json_file = forms.FileField(help_text="Fichier .json contenant les items de checklist")
 
@@ -39,15 +46,19 @@ class ChecklistJSONUploadForm(forms.Form):
         return f
 
 
+# ---------- Notes / Images (multi-upload, safe for Django) ----------
+class MultiFileInput(forms.ClearableFileInput):
+    # This avoids the “doesn't support uploading multiple files” error
+    allow_multiple_selected = True
+
 class ChecklistItemUpdateForm(forms.Form):
     text = forms.CharField(
         label="Commentaire",
         required=False,
-        widget=forms.Textarea(attrs={'rows': 2})
+        widget=forms.Textarea(attrs={'rows': 2, 'class': 'w-full border rounded p-2'})
     )
-    # ⬇️ Enable multi-image uploads
-    images = forms.ImageField(
+    images = forms.FileField(
         label="Images",
         required=False,
-        widget=MultipleImageInput(attrs={'multiple': True, 'accept': 'image/*'})
+        widget=MultiFileInput(attrs={'multiple': True, 'accept': 'image/*'})
     )

@@ -1,0 +1,274 @@
+# azure-pipelines.yml
+name: $(Date:yyyyMMdd).$(Rev:r)
+
+trigger:
+  branches:
+    include: [ main ]
+pr:
+  branches:
+    include: [ main ]
+
+# Cancel older runs for same ref
+schedules: []  # (optional cron here)
+variables:
+  - group: crm-secrets  # <-- create in Pipelines > Library (add secrets there)
+  - name: pythonVersion
+    value: '3.12'
+  - name: artifactName
+    value: 'ci-reports'
+  - name: imageName
+    value: 'crm-app'     # e.g., teamsre344/crm-app
+  - name: dockerfilePath
+    value: 'Dockerfile'
+
+stages:
+# =========================
+# CI — Lint, Test, Reports
+# =========================
+- stage: CI
+  displayName: "CI: Lint • Test • Reports"
+  jobs:
+  - job: lint_test
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 0
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+        architecture: 'x64'
+
+    - task: Cache@2
+      displayName: "Cache pip"
+      inputs:
+        key: 'pip | "$(Agent.OS)" | requirements.txt'
+        restoreKeys: 'pip | "$(Agent.OS)"'
+        path: '$(PIP_CACHE_DIR)'
+      condition: exists('requirements.txt')
+
+    - script: |
+        python -m pip install --upgrade pip wheel setuptools
+        # App requirements
+        python -m pip install -r requirements.txt
+        # CI/dev-only tools
+        python -m pip install \
+          coverage pytest pytest-django \
+          ruff black mypy \
+          bandit pip-audit safety \
+          radon cloc \
+          xhtml2pdf reportlab Pillow
+      displayName: "Install deps"
+
+    # Create a tiny env file (keeps secrets in pipeline vars)
+    - script: |
+        cat > .env.ci <<'EOF'
+        DEBUG=0
+        EOF
+      displayName: "Write .env.ci (non-secret defaults)"
+
+    # Export secret vars to environment for this job
+    - script: |
+        echo "##vso[task.setvariable variable=SECRET_KEY;issecret=true]$(DJANGO_SECRET_KEY)"
+        if [ -n "$(DJANGO_ALLOWED_HOSTS)" ]; then echo "##vso[task.setvariable variable=ALLOWED_HOSTS]$(DJANGO_ALLOWED_HOSTS)"; fi
+        if [ -n "$(DATABASE_URL)" ]; then echo "##vso[task.setvariable variable=DATABASE_URL;issecret=true]$(DATABASE_URL)"; fi
+      displayName: "Expose secrets to env"
+
+    - script: |
+        python manage.py check --deploy
+        python manage.py makemigrations --check --dry-run
+        python manage.py collectstatic --noinput || true
+      displayName: "Django checks + collectstatic"
+      env:
+        DJANGO_SETTINGS_MODULE: crm_project.settings
+        SECRET_KEY: $(SECRET_KEY)
+        ALLOWED_HOSTS: $(ALLOWED_HOSTS)
+        DATABASE_URL: $(DATABASE_URL)
+
+    - script: |
+        ruff check .
+        black --check .
+        mypy --ignore-missing-imports --install-types --non-interactive .
+      displayName: "Lint (ruff/black/mypy)"
+
+    - script: |
+        mkdir -p reports
+        bandit -r . -f json -o reports/bandit.json || true
+        pip-audit -r requirements.txt -f json -o reports/pip-audit.json || true
+        safety check --full-report || true
+      displayName: "Security scans (bandit/pip-audit/safety)"
+
+    - script: |
+        mkdir -p reports
+        radon cc -s -a -i .venv,venv,migrations . > reports/radon_cc.txt
+        radon mi -s -i .venv,venv,migrations . > reports/radon_mi.txt
+        cloc --exclude-dir=.git,.venv,venv,migrations --md . > reports/cloc.md
+      displayName: "Code metrics (radon/cloc)"
+
+    - script: |
+        coverage run -m pytest --junitxml=reports/junit.xml -q || coverage run manage.py test
+        coverage xml
+        coverage html
+      displayName: "Tests + Coverage"
+      env:
+        DJANGO_SETTINGS_MODULE: crm_project.settings
+        SECRET_KEY: $(SECRET_KEY)
+        ALLOWED_HOSTS: $(ALLOWED_HOSTS)
+        DATABASE_URL: $(DATABASE_URL)
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'reports/junit.xml'
+        failTaskOnFailedTests: true
+      displayName: "Publish test results"
+
+    - task: PublishCodeCoverageResults@2
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: 'coverage.xml'
+        reportDirectory: 'htmlcov'
+      displayName: "Publish coverage"
+
+    - task: PublishBuildArtifacts@1
+      displayName: "Publish CI reports"
+      inputs:
+        PathtoPublish: 'reports'
+        ArtifactName: '$(artifactName)'
+        publishLocation: 'Container'
+
+# ==================================
+# (Optional) Build & Push Docker img
+# ==================================
+- stage: Image
+  displayName: "Container image"
+  dependsOn: CI
+  condition: succeededOrFailed()  # still build to see image errors
+  jobs:
+  - job: docker
+    displayName: "Docker build & push (if Dockerfile)"
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+
+    # Option A — use a Docker Registry *service connection*
+    # (create one named 'acr-connection' or 'dockerhub-connection')
+    - task: Docker@2
+      displayName: "Build & push"
+      condition: and(succeeded(), exists('$(dockerfilePath)'))
+      inputs:
+        containerRegistry: 'dockerhub-connection'   # <-- change to your service connection
+        repository: '$(imageName)'
+        command: 'buildAndPush'
+        Dockerfile: '$(dockerfilePath)'
+        tags: |
+          $(Build.BuildId)
+          latest
+
+    - script: |
+        echo "image=$(imageName)" > image.txt
+        echo "tag=$(Build.BuildId)" >> image.txt
+      displayName: "Record image info"
+      condition: exists('$(dockerfilePath)')
+
+    - task: PublishBuildArtifacts@1
+      displayName: "Publish image metadata"
+      condition: exists('image.txt')
+      inputs:
+        PathtoPublish: '.'
+        ArtifactName: 'image_metadata'
+        publishLocation: 'Container'
+
+# =============================
+# Deploy to DEV (with approvals)
+# =============================
+- stage: Deploy_Dev
+  displayName: "Deploy: DEV"
+  dependsOn: Image
+  condition: succeeded()
+  jobs:
+  - deployment: dev_deploy
+    displayName: "Deploy to DEV"
+    environment: 'dev'   # set environment approvals in DevOps > Environments
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+
+          # Option A: Azure Web App for Containers
+          # - task: AzureWebAppContainer@1
+          #   displayName: "Azure Web App (Container)"
+          #   inputs:
+          #     azureSubscription: 'az-sp-connection'  # service connection
+          #     appName: '$(AZURE_WEBAPP_NAME)'
+          #     containers: '$(DOCKER_REGISTRY_SERVER)/$(imageName):$(Build.BuildId)'
+
+          # Option B: Generic Linux VM with Docker Compose (via SSH)
+          # 1) Create a service connection of type "SSH" named 'ssh-dev-host'
+          # 2) On remote host, have a docker-compose.yml that uses imageName:tag
+          - task: SSH@0
+            displayName: "Docker Compose up (DEV)"
+            inputs:
+              sshEndpoint: 'ssh-dev-host'
+              runOptions: 'inline'
+              inline: |
+                set -e
+                export IMAGE_NAME="$(imageName)"
+                export IMAGE_TAG="$(Build.BuildId)"
+                docker pull "$IMAGE_NAME:$IMAGE_TAG" || true
+                docker compose pull || true
+                docker compose up -d
+                docker image prune -f
+
+          # Run DB migrations on DEV (containerized)
+          - task: SSH@0
+            displayName: "Run migrations (DEV)"
+            inputs:
+              sshEndpoint: 'ssh-dev-host'
+              runOptions: 'inline'
+              inline: |
+                set -e
+                docker compose exec -T web python manage.py migrate --noinput || true
+
+# ==============================
+# Deploy to PROD (needs approval)
+# ==============================
+- stage: Deploy_Prod
+  displayName: "Deploy: PROD"
+  dependsOn: Deploy_Dev
+  condition: succeeded()
+  jobs:
+  - deployment: prod_deploy
+    displayName: "Deploy to PROD"
+    environment: 'prod'  # gate/approval here
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          # Choose the same Option A or B as DEV, but with prod endpoints
+          - task: SSH@0
+            displayName: "Docker Compose up (PROD)"
+            inputs:
+              sshEndpoint: 'ssh-prod-host'
+              runOptions: 'inline'
+              inline: |
+                set -e
+                export IMAGE_NAME="$(imageName)"
+                export IMAGE_TAG="$(Build.BuildId)"
+                docker pull "$IMAGE_NAME:$IMAGE_TAG" || true
+                docker compose pull || true
+                docker compose up -d
+                docker image prune -f
+
+          - task: SSH@0
+            displayName: "Run migrations (PROD)"
+            inputs:
+              sshEndpoint: 'ssh-prod-host'
+              runOptions: 'inline'
+              inline: |
+                set -e
+                docker compose exec -T web python manage.py migrate --noinput || true

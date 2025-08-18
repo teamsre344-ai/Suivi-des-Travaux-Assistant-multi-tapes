@@ -1,28 +1,27 @@
 from datetime import date, datetime, timedelta
 import io
 import json
-import os
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.contrib.staticfiles import finders
 from django.core.paginator import Paginator
-from django.db.models import (
-    Q, F, Count, Avg, DurationField, ExpressionWrapper, Case, When, IntegerField
-)
-from django.db.models.functions import TruncMonth, TruncDate, TruncYear, Coalesce
+from django.db.models import Q, F, Count, Avg, DurationField, ExpressionWrapper
+from django.db.models.functions import TruncMonth, TruncDate
 from django.http import HttpResponse, FileResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from xhtml2pdf import pisa
 
-from xhtml2pdf import pisa  # pip install xhtml2pdf
-
-from .forms import LoginForm, ProjectForm, ChecklistJSONUploadForm, ChecklistItemUpdateForm
+from .forms import (
+    PasswordlessLoginForm,
+    ProjectForm,
+    ChecklistJSONUploadForm,
+    ChecklistItemUpdateForm,
+)
 from .models import (
     ChecklistItem,
     Project,
@@ -30,66 +29,123 @@ from .models import (
     TimelineEntry,
     ChecklistItemImage,
     ChecklistItemNote,
-    ChecklistTemplate,
 )
 
+User = get_user_model()
+
+# --------------------------------
+# Helpers for team directory/roles
+# --------------------------------
+def _directory_entry_for(email: str) -> dict | None:
+    if not email:
+        return None
+    directory = getattr(settings, "TEAM_DIRECTORY", {}) or {}
+    return directory.get(email.lower())
+
+def _sync_user_and_technician_from_directory(user: User) -> Technician:
+    """
+    Ensure the User (names) and Technician (role/is_manager) reflect TEAM_DIRECTORY.
+    If no directory entry, keep existing values (role defaults to 'Technicien').
+    """
+    entry = _directory_entry_for(user.email)
+    defaults_role = (entry or {}).get("role") or "Technicien"
+    tech, _ = Technician.objects.get_or_create(user=user, defaults={'role': defaults_role})
+
+    if entry:
+        changed = False
+        if entry.get("first_name") and user.first_name != entry["first_name"]:
+            user.first_name = entry["first_name"]; changed = True
+        if entry.get("last_name") and user.last_name != entry["last_name"]:
+            user.last_name = entry["last_name"]; changed = True
+        if changed:
+            user.save(update_fields=["first_name", "last_name"])
+
+        if entry.get("role") and tech.role != entry["role"]:
+            tech.role = entry["role"]
+            tech.save(update_fields=["role"])
+
+        if hasattr(tech, "is_manager"):
+            is_mgr = bool(entry.get("is_manager", False))
+            if tech.is_manager != is_mgr:
+                tech.is_manager = is_mgr
+                tech.save(update_fields=["is_manager"])
+
+    return tech
+
+def _normalize_email_for_lookup(raw: str) -> list[str]:
+    """
+    Accepts:
+      - full email (any domain)
+      - or just 'firstname.lastname' (no domain)
+    Returns a small list of candidate emails to try.
+    """
+    e = (raw or "").strip()
+    if not e:
+        return []
+    candidates: list[str] = []
+
+    if "@" in e:
+        candidates.append(e)
+        local, domain = e.split("@", 1)
+        if domain.lower() == "logibec.com":
+            candidates.append(f"{local}@lgisolutions.com")
+        elif domain.lower() == "lgisolutions.com":
+            candidates.append(f"{local}@logibec.com")
+    else:
+        candidates.append(f"{e}@lgisolutions.com")
+        candidates.append(f"{e}@logibec.com")
+
+    out, seen = [], set()
+    for c in candidates:
+        c2 = c.lower()
+        if c2 not in seen:
+            out.append(c2); seen.add(c2)
+    return out
 
 # ------------------ Auth ------------------
 def login_view(request):
+    """
+    Passwordless login:
+    - asks for email only
+    - if a matching User.email exists (case-insensitive), log them in
+    """
     if request.user.is_authenticated:
         return redirect('home')
 
-    form = LoginForm(request.POST or None)
+    form = PasswordlessLoginForm(request.POST or None)
+
     if request.method == 'POST' and form.is_valid():
-        ident = form.cleaned_data['identifier'].strip()
-        pwd = form.cleaned_data['password']
+        raw = form.cleaned_data['email'].strip()
+        # Support both lgisolutions.com and logibec.com + bare local part
+        for candidate in _normalize_email_for_lookup(raw):
+            user = User.objects.filter(email__iexact=candidate).first()
+            if user:
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                messages.success(request, "Connexion réussie.")
+                return redirect('home')
 
-        username = ident
-        try:
-            user_obj = User.objects.get(email__iexact=ident)
-            username = user_obj.username
-        except User.DoesNotExist:
-            pass
+        messages.error(request, "Aucun utilisateur trouvé avec cet e-mail.")
+        # fall through to re-render form
 
-        user = authenticate(request, username=username, password=pwd)
-        if user:
-            login(request, user)
-            messages.success(request, 'Connexion réussie.')
-            return redirect('home')
-        messages.error(request, "Identifiants invalides.")
     return render(request, 'login.html', {'form': form})
-
 
 @login_required
 def logout_view(request):
     logout(request)
     return redirect('login')
 
-
-# ------------------ Helpers ------------------
-def _pct_change(current: int, prev: int) -> float:
-    if prev == 0:
-        return 100.0 if current > 0 else 0.0
-    return round((current - prev) * 100.0 / prev, 1)
-
-
 # ------------------ Dashboard ------------------
 @login_required
 def home_view(request):
-    # Profile
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-    is_manager = tech.is_manager
-
-    # Scope
+    tech = _sync_user_and_technician_from_directory(request.user)
+    is_manager = getattr(tech, 'is_manager', False)
     projects = Project.objects.all() if is_manager else Project.objects.filter(technician=tech)
 
-    # Headline counts
     total_projects = projects.count()
     pending_projects = projects.filter(status='pending').count()
     in_progress_projects = projects.filter(status='in_progress').count()
     completed_projects = projects.filter(status='completed').count()
 
-    # Trends (week over week)
     now = timezone.now()
     today = now.date()
     week_start = today - timedelta(days=today.weekday())
@@ -101,6 +157,12 @@ def home_view(request):
         created_at__date__gte=prev_week_start,
         created_at__date__lt=prev_week_end
     ).count()
+
+    def _pct_change(current: int, prev: int) -> float:
+        if prev == 0:
+            return 100.0 if current > 0 else 0.0
+        return round((current - prev) * 100.0 / prev, 1)
+
     total_trend_pct = _pct_change(new_this_week, new_prev_week)
 
     pending_new_today = projects.filter(status='pending', created_at__date=today).count()
@@ -132,13 +194,9 @@ def home_view(request):
     ).count()
     completed_trend_pct = _pct_change(completed_this_week, completed_last_week)
 
-    # Product distribution & recent
     product_counts = projects.values('product').annotate(c=Count('id')).order_by('-c')
     recent_projects = projects.select_related('technician').order_by('-created_at')[:8]
 
-    # -----------------------------
-    # PERFORMANCE DIAGRAM (12 mo.)
-    # -----------------------------
     base_num = today.year * 12 + today.month
     month_keys = []
     for i in range(11, -1, -1):
@@ -185,12 +243,10 @@ def home_view(request):
             'completed_pct': int(d * 100 / max_count),
         })
 
-    # Recent KPIs used in the header of the card
     last30_created = projects.filter(created_at__gte=now - timedelta(days=30)).count()
     last30_completed_qs = projects.filter(status='completed', updated_at__gte=now - timedelta(days=30))
     last30_completed = last30_completed_qs.count()
 
-    # On-time rate for last 90 days
     last90_completed_qs = projects.filter(status='completed', updated_at__gte=now - timedelta(days=90))
     last90_on_time = (last90_completed_qs
                       .annotate(done_date=TruncDate('updated_at'))
@@ -198,14 +254,10 @@ def home_view(request):
                       .count())
     on_time_rate_90 = int(last90_on_time * 100 / last90_completed_qs.count()) if last90_completed_qs.exists() else 0
 
-    # Average lead time (created -> completed) in last 90 days
     dur_expr = ExpressionWrapper(F('updated_at') - F('created_at'), output_field=DurationField())
     avg_lead_td = (last90_completed_qs.annotate(dur=dur_expr).aggregate(avg=Avg('dur'))['avg']) or timedelta(0)
     avg_lead_days_90 = round(avg_lead_td.total_seconds() / 86400, 1) if avg_lead_td else 0.0
 
-    # -----------------------------
-    # NEW: donut data (work_type)
-    # -----------------------------
     last_12m = now - timedelta(days=365)
     wt_qs = (projects.filter(created_at__gte=last_12m)
              .values('work_type')
@@ -235,43 +287,34 @@ def home_view(request):
         'recent_projects': recent_projects,
         'product_counts': product_counts,
 
-        # diagram + KPIs
         'diagram_bars': diagram_bars,
         'last30_created': last30_created,
         'last30_completed': last30_completed,
         'on_time_rate_90': on_time_rate_90,
         'avg_lead_days_90': avg_lead_days_90,
 
-        # NEW donut arrays
         'worktype_labels': worktype_labels,
         'worktype_values': worktype_values,
     }
     return render(request, 'home.html', context)
 
-
-# in views.py (below other views)
 @login_required
 def analytics_view(request):
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-    is_manager = tech.is_manager
+    tech = _sync_user_and_technician_from_directory(request.user)
+    is_manager = getattr(tech, 'is_manager', False)
     projects = Project.objects.all() if is_manager else Project.objects.filter(technician=tech)
     return render(request, "analytics.html", {"technician": tech, "total": projects.count()})
-
 
 # ------------------ Project list ------------------
 @login_required
 def project_list_view(request):
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
+    tech = _sync_user_and_technician_from_directory(request.user)
+    qs = Project.objects.all() if getattr(tech, 'is_manager', False) else Project.objects.filter(technician=tech)
 
-    # Base queryset: managers see all, others see only assigned
-    qs = Project.objects.all() if tech.is_manager else Project.objects.filter(technician=tech)
-
-    # --- Read filters ---
     status = (request.GET.get('status') or '').strip()
     environment = (request.GET.get('environment') or '').strip()
     product = (request.GET.get('product') or '').strip()
     q = (request.GET.get('q') or '').strip()
-    # NEW: donut click support
     work_type = (request.GET.get('work_type') or '').strip()
 
     created_by_me = request.GET.get('created_by_me') == 'on'
@@ -284,7 +327,6 @@ def project_list_view(request):
     per_page = int(request.GET.get('per_page') or 10)
     per_page_choices = [10, 20, 50, 100]
 
-    # --- Apply filters ---
     if status:
         qs = qs.filter(status=status)
     if environment:
@@ -310,7 +352,6 @@ def project_list_view(request):
     if assigned_to_me:
         qs = qs.filter(technician=tech)
 
-    # Date range (inclusive)
     def _parse_date(s):
         try:
             return datetime.strptime(s, "%Y-%m-%d").date()
@@ -324,7 +365,6 @@ def project_list_view(request):
     if d_to:
         qs = qs.filter(date__lt=(d_to + timedelta(days=1)))
 
-    # Sorting
     sort_map = {
         'created_desc': '-created_at',
         'created_asc': 'created_at',
@@ -338,7 +378,6 @@ def project_list_view(request):
     }
     qs = qs.order_by(sort_map.get(sort_key, '-created_at'))
 
-    # CSV export (honors filters)
     if request.GET.get('export') == '1':
         resp = HttpResponse(content_type='text/csv; charset=utf-8')
         resp['Content-Disposition'] = 'attachment; filename="projects.csv"'
@@ -358,18 +397,15 @@ def project_list_view(request):
             resp.write(",".join(row) + "\n")
         return resp
 
-    # Pagination
     paginator = Paginator(qs.select_related('technician').only(
         'id', 'project_number', 'title', 'client_name', 'product', 'environment',
         'status', 'created_at', 'date', 'technician__user__first_name', 'technician__user__last_name'
     ), per_page)
     page_obj = paginator.get_page(request.GET.get('page') or 1)
 
-    # Status counts for quick chips
     status_counts = Project.objects.values('status').annotate(c=Count('id'))
     status_map = {s['status']: s['c'] for s in status_counts}
 
-    # Product choices (distinct values actually in DB)
     products = list(Project.objects.order_by().values_list('product', flat=True).distinct())
 
     context = {
@@ -378,11 +414,10 @@ def project_list_view(request):
         'page_obj': page_obj,
         'paginator': paginator,
 
-        # keep filters in template
         'status': status,
         'environment': environment,
         'product': product,
-        'work_type': work_type,  # NEW
+        'work_type': work_type,
         'q': q,
         'created_by_me': created_by_me,
         'assigned_to_me': assigned_to_me,
@@ -397,13 +432,12 @@ def project_list_view(request):
     }
     return render(request, 'project_list.html', context)
 
-
 # ------------------ Global search ------------------
 @login_required
 def search_view(request):
     q = (request.GET.get('q') or '').strip()
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-    base = Project.objects.all() if tech.is_manager else Project.objects.filter(technician=tech)
+    tech = _sync_user_and_technician_from_directory(request.user)
+    base = Project.objects.all() if getattr(tech, 'is_manager', False) else Project.objects.filter(technician=tech)
 
     projects = base.none()
     matched_techs = Technician.objects.none()
@@ -453,13 +487,11 @@ def search_view(request):
     }
     return render(request, 'search_results.html', ctx)
 
-
 # ------------------ Create / Detail ------------------
 @login_required
 def project_create_view(request):
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
+    tech = _sync_user_and_technician_from_directory(request.user)
 
-    # Optional ruleset (by name) passed as ?ruleset=<name>
     ruleset_name = (request.GET.get('ruleset') or '').strip()
     ruleset = None
     if ruleset_name:
@@ -471,17 +503,15 @@ def project_create_view(request):
         if form.is_valid():
             p = form.save(commit=False)
             p.created_by = request.user
-            p.technician = tech if not tech.is_manager else tech  # managers can still own it
+            p.technician = tech
             env_label = 'Test' if p.environment == 'test' else 'Production'
             p.title = f"{env_label} — {p.client_name} — {p.product} — {p.project_number}"
 
-            # Link the ruleset if provided
             if ruleset:
                 p.ruleset = ruleset
                 if ruleset.default_checklist:
                     p.checklist_data = ruleset.default_checklist
 
-            # If no ruleset checklist, create a sensible default
             if not p.checklist_data:
                 checklist_items = [
                     "Demander les accès pour tous les serveurs",
@@ -499,7 +529,6 @@ def project_create_view(request):
 
             p.save()
 
-            # Materialize checklist items
             for idx, item in enumerate((p.checklist_data or {}).get('items', [])):
                 ChecklistItem.objects.create(
                     project=p,
@@ -511,7 +540,6 @@ def project_create_view(request):
             messages.success(request, 'Projet créé avec succès.')
             return redirect('project_detail', pk=p.pk)
     else:
-        # Pre-fill form from ruleset if provided
         initial = {}
         if ruleset:
             if ruleset.default_environment:
@@ -524,80 +552,23 @@ def project_create_view(request):
 
     return render(request, 'project_form.html', {'form': form, 'technician': tech})
 
-
 @login_required
 def project_detail_view(request, pk):
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-    p = get_object_or_404(Project, pk=pk) if tech.is_manager else get_object_or_404(
+    tech = _sync_user_and_technician_from_directory(request.user)
+    p = get_object_or_404(Project, pk=pk) if getattr(tech, 'is_manager', False) else get_object_or_404(
         Project, Q(pk=pk) & (Q(technician=tech) | Q(created_by=request.user))
     )
     is_creator = (p.created_by_id == request.user.id)
     return render(request, 'project_detail.html', {'project': p, 'technician': tech, 'is_creator': is_creator})
 
-
-# ------------------ Profile ------------------
-@login_required
-def profile_view(request):
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-
-    # Projects the user is assigned to (as technician)
-    assigned_qs = Project.objects.filter(technician=tech)
-
-    # Projects the user created
-    created_qs = Project.objects.filter(created_by=request.user)
-
-    total = assigned_qs.count()
-    pending = assigned_qs.filter(status='pending').count()
-    doing = assigned_qs.filter(status='in_progress').count()
-    done = assigned_qs.filter(status='completed').count()
-
-    # On-time: completed where last update date <= scheduled project "date"
-    on_time = (
-        assigned_qs.filter(status='completed')
-        .annotate(_done_date=TruncDate('updated_at'))
-        .filter(_done_date__lte=F('date'))
-        .count()
-    )
-    on_time_rate = int((on_time / done) * 100) if done else 0
-
-    # Average checklist completion (compute in Python since it's a property)
-    assigned_list = list(assigned_qs[:500])  # safety cap
-    completion_avg = int(sum(p.completion_percentage for p in assigned_list) / total) if total else 0
-
-    recent_assigned = assigned_qs.select_related('technician').order_by('-created_at')[:10]
-    recent_created = created_qs.select_related('technician').order_by('-created_at')[:10]
-
-    # Product mix for the user
-    product_counts = (
-        assigned_qs.values('product')
-        .annotate(c=Count('id'))
-        .order_by('-c')
-    )
-
-    context = {
-        'technician': tech,
-        'total': total,
-        'pending': pending,
-        'doing': doing,
-        'done': done,
-        'on_time_rate': on_time_rate,
-        'completion_avg': completion_avg,
-        'recent_assigned': recent_assigned,
-        'recent_created': recent_created,
-        'product_counts': product_counts,
-    }
-    return render(request, 'profile.html', context)
-
-
 # ------------------ Team dashboard ------------------
 @login_required
 def team_dashboard_view(request):
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-    if not tech.is_manager:
+    tech = _sync_user_and_technician_from_directory(request.user)
+    if not getattr(tech, 'is_manager', False):
         messages.error(request, 'Accès réservé aux managers.')
         return redirect('home')
 
-    # Aggregate counts per technician
     techs = (
         Technician.objects
         .select_related('user')
@@ -610,7 +581,6 @@ def team_dashboard_view(request):
         .order_by('user__first_name', 'user__last_name')
     )
 
-    # Build a lightweight structure with recent projects + completion %
     team = []
     for t in techs:
         total = t.total or 0
@@ -620,14 +590,12 @@ def team_dashboard_view(request):
 
     return render(request, 'team_dashboard.html', {'team': team, 'technician': tech})
 
-
 # ------------------ Phase updates ------------------
 @require_POST
 @login_required
 def project_phase_update_view(request, pk):
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-    # managers can see all; technicians see their own
-    if tech.is_manager:
+    tech = _sync_user_and_technician_from_directory(request.user)
+    if getattr(tech, 'is_manager', False):
         p = get_object_or_404(Project, pk=pk)
     else:
         p = get_object_or_404(Project, pk=pk, technician=tech)
@@ -641,7 +609,6 @@ def project_phase_update_view(request, pk):
         messages.error(request, "Action invalide.")
         return redirect('project_detail', pk=p.pk)
 
-    # Enforce sequence at the view level too (friendlier message)
     if phase == 'execution' and new_state in ('in_progress', 'completed') and p.preparation_phase != 'completed':
         messages.error(request, "Terminez la préparation avant de démarrer l'exécution.")
         return redirect('project_detail', pk=p.pk)
@@ -649,7 +616,6 @@ def project_phase_update_view(request, pk):
         messages.error(request, "Terminez l'exécution avant de démarrer la validation.")
         return redirect('project_detail', pk=p.pk)
 
-    # Apply change
     if phase == 'preparation':
         p.preparation_phase = new_state
         label = "Préparation"
@@ -677,69 +643,14 @@ def project_phase_update_view(request, pk):
 
     return redirect('project_detail', pk=p.pk)
 
-
-# ------------------ GEO: full overview page ------------------
-@login_required
-def geo_overview(request):
-    """Interactive map + 10-year analytics."""
-    ten_years_start = date(timezone.now().year - 10, 1, 1)
-
-    base = Project.objects.filter(date__gte=ten_years_start)
-
-    # Markers (skip if no coords)
-    markers = list(
-        base.exclude(latitude__isnull=True, longitude__isnull=True)
-            .values('id', 'project_number', 'client_name', 'product',
-                    'work_type', 'status', 'date',
-                    'site_city', 'site_region', 'site_country',
-                    'latitude', 'longitude')
-    )
-
-    # Totaux par région (10 ans)
-    by_region = (
-        base.values('site_region')
-            .exclude(site_region='')
-            .annotate(total=Count('id'))
-            .order_by('-total')
-    )
-
-    # Annuel (10 ans)
-    by_year = (
-        base.annotate(y=TruncYear('date'))
-            .values('y')
-            .annotate(total=Count('id'))
-            .order_by('y')
-    )
-
-    # Par type de travaux (work_type) dans chaque région (top 8 régions)
-    top_regions = [r['site_region'] for r in by_region[:8]]
-    by_type_region = (
-        base.filter(site_region__in=top_regions)
-            .values('site_region', 'work_type')
-            .annotate(total=Count('id'))
-            .order_by('site_region', '-total')
-    )
-
-    context = {
-        'markers': markers,
-        'by_region': list(by_region),
-        'by_year': list(by_year),
-        'by_type_region': list(by_type_region),
-        'ten_years_start': ten_years_start,
-    }
-    return render(request, 'geo_overview.html', context)
-
-
 # =====================================================================
 # ===============  CHECKLIST: JSON import / notes / images  ===========
 # =====================================================================
-
 @login_required
 @require_POST
 def checklist_import_view(request, pk):
-    """Attach a JSON checklist to a project (replaces current items)."""
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-    project = get_object_or_404(Project, pk=pk) if tech.is_manager else get_object_or_404(
+    tech = _sync_user_and_technician_from_directory(request.user)
+    project = get_object_or_404(Project, pk=pk) if getattr(tech, 'is_manager', False) else get_object_or_404(
         Project, Q(pk=pk) & (Q(technician=tech) | Q(created_by=request.user))
     )
 
@@ -760,7 +671,6 @@ def checklist_import_view(request, pk):
         messages.error(request, "JSON invalide: aucun item.")
         return redirect('project_detail', pk=project.pk)
 
-    # Wipe existing list and rebuild in order
     ChecklistItem.objects.filter(project=project).delete()
     for i, item in enumerate(items):
         label = (item.get('label') or '').strip() if isinstance(item, dict) else str(item).strip()
@@ -768,23 +678,19 @@ def checklist_import_view(request, pk):
             label = f"Étape {i+1}"
         ChecklistItem.objects.create(project=project, label=label, order=i)
 
-    # Keep a JSON copy on the Project (optional)
     project.checklist_data = {'items': [{'label': (x.get('label') if isinstance(x, dict) else str(x)) or ''} for x in items]}
     project.save(update_fields=['checklist_data', 'updated_at'])
 
     messages.success(request, f"Checklist importée: {len(items)} étapes.")
     return redirect('project_detail', pk=project.pk)
 
-
 @login_required
 @require_POST
 def checklist_item_add_note_view(request, item_id):
-    """Add a comment and optional multiple images to a checklist item."""
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
+    tech = _sync_user_and_technician_from_directory(request.user)
     item = get_object_or_404(ChecklistItem, pk=item_id)
 
-    # Authorization: owner/assignee or manager
-    if not tech.is_manager and item.project.technician_id != tech.id and item.project.created_by_id != request.user.id:
+    if not getattr(tech, 'is_manager', False) and item.project.technician_id != tech.id and item.project.created_by_id != request.user.id:
         return HttpResponseBadRequest("Non autorisé")
 
     form = ChecklistItemUpdateForm(request.POST, request.FILES)
@@ -796,29 +702,25 @@ def checklist_item_add_note_view(request, item_id):
     if text:
         ChecklistItemNote.objects.create(item=item, author=request.user, text=text)
 
-    files = request.FILES.getlist('images')
-    for f in files:
-        if f:  # basic guard
+    for f in request.FILES.getlist('images'):
+        if f:
             ChecklistItemImage.objects.create(item=item, image=f)
 
     messages.success(request, "Note/Images ajoutées.")
     return redirect('project_detail', pk=item.project_id)
 
-
 @login_required
 @require_POST
 def checklist_item_toggle_view(request, item_id):
-    """Toggle a checklist item completed flag."""
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
+    tech = _sync_user_and_technician_from_directory(request.user)
     item = get_object_or_404(ChecklistItem, pk=item_id)
 
-    if not tech.is_manager and item.project.technician_id != tech.id and item.project.created_by_id != request.user.id:
+    if not getattr(tech, 'is_manager', False) and item.project.technician_id != tech.id and item.project.created_by_id != request.user.id:
         return HttpResponseBadRequest("Non autorisé")
 
     new_state = request.POST.get('completed') == '1'
     item.completed = new_state
     update_fields = ['completed']
-    # Optionally support a completed_at field if your model has it
     if hasattr(item, 'completed_at'):
         item.completed_at = timezone.now() if new_state else None
         update_fields.append('completed_at')
@@ -827,33 +729,10 @@ def checklist_item_toggle_view(request, item_id):
     messages.success(request, "Étape mise à jour.")
     return redirect('project_detail', pk=item.project_id)
 
-
-# --- Helper for xhtml2pdf to resolve STATIC/MEDIA paths
-def _pisa_link_callback(uri, rel):
-    """
-    Convert HTML URIs (e.g., /static/... or /media/...) into absolute file system paths
-    so xhtml2pdf can embed images and assets.
-    """
-    # MEDIA files
-    if settings.MEDIA_URL and uri.startswith(settings.MEDIA_URL):
-        path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, "", 1))
-        return path
-
-    # STATIC files (use staticfiles finders)
-    if settings.STATIC_URL and uri.startswith(settings.STATIC_URL):
-        path = finders.find(uri.replace(settings.STATIC_URL, "", 1))
-        if path:
-            return path
-
-    # Absolute URI (http/https) – let pisa try to fetch as-is
-    return uri
-
-
 @login_required
 def project_checklist_pdf_view(request, pk):
-    """Export the project's checklist (with comments & images) to a PDF."""
-    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
-    project = get_object_or_404(Project, pk=pk) if tech.is_manager else get_object_or_404(
+    tech = _sync_user_and_technician_from_directory(request.user)
+    project = get_object_or_404(Project, pk=pk) if getattr(tech, 'is_manager', False) else get_object_or_404(
         Project, Q(pk=pk) & (Q(technician=tech) | Q(created_by=request.user))
     )
 
@@ -862,7 +741,6 @@ def project_checklist_pdf_view(request, pk):
              .prefetch_related('notes', 'images')
              .order_by('order', 'id'))
 
-    # Render HTML to PDF
     html = render_to_string('checklist_pdf.html', {
         'project': project,
         'items': items,
@@ -871,10 +749,57 @@ def project_checklist_pdf_view(request, pk):
     })
 
     pdf_io = io.BytesIO()
-    pisa_status = pisa.CreatePDF(src=html, dest=pdf_io, link_callback=_pisa_link_callback, encoding='utf-8')
+    pisa_status = pisa.CreatePDF(io.BytesIO(html.encode('utf-8')), dest=pdf_io)
     if pisa_status.err:
         return HttpResponseBadRequest("Échec de génération du PDF")
 
     pdf_io.seek(0)
     filename = f"Checklist_{project.project_number}.pdf" if project.project_number else "Checklist.pdf"
     return FileResponse(pdf_io, filename=filename, content_type='application/pdf')
+
+# --- Profile (kept for URL import) ---
+@login_required
+def profile_view(request):
+    tech, _ = Technician.objects.get_or_create(user=request.user, defaults={'role': 'Technicien'})
+
+    assigned_qs = Project.objects.filter(technician=tech)
+    created_qs = Project.objects.filter(created_by=request.user)
+
+    total = assigned_qs.count()
+    pending = assigned_qs.filter(status='pending').count()
+    doing = assigned_qs.filter(status='in_progress').count()
+    done = assigned_qs.filter(status='completed').count()
+
+    on_time = (
+        assigned_qs.filter(status='completed')
+        .annotate(_done_date=TruncDate('updated_at'))
+        .filter(_done_date__lte=F('date'))
+        .count()
+    )
+    on_time_rate = int((on_time / done) * 100) if done else 0
+
+    assigned_list = list(assigned_qs[:500])
+    completion_avg = int(sum(p.completion_percentage for p in assigned_list) / total) if total else 0
+
+    recent_assigned = assigned_qs.select_related('technician').order_by('-created_at')[:10]
+    recent_created  = created_qs.select_related('technician').order_by('-created_at')[:10]
+
+    product_counts = (
+        assigned_qs.values('product')
+        .annotate(c=Count('id'))
+        .order_by('-c')
+    )
+
+    context = {
+        'technician': tech,
+        'total': total,
+        'pending': pending,
+        'doing': doing,
+        'done': done,
+        'on_time_rate': on_time_rate,
+        'completion_avg': completion_avg,
+        'recent_assigned': recent_assigned,
+        'recent_created': recent_created,
+        'product_counts': product_counts,
+    }
+    return render(request, 'profile.html', context)

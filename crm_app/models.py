@@ -14,7 +14,7 @@ from django.contrib.postgres.indexes import GinIndex
 class Technician(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=20, blank=True)
-    role = models.CharField(max_length=50, default='Technicien')
+    role = models.CharField(max_length=500, default='Technicien')
     is_manager = models.BooleanField(default=False)
 
     # Lightweight profile fields (defaults so migrations won’t prompt)

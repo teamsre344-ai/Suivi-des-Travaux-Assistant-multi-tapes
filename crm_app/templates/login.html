@@ -1,41 +1,91 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Connexion - CRM</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-  <div class="bg-white shadow-xl rounded-xl p-8 w-full max-w-md">
-    <div class="flex items-center justify-center mb-4">
-      <div class="h-10 w-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-        <i class="fa-solid fa-chart-simple"></i>
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Connexion · CRM{% endblock %}
+
+{% block content %}
+{# Hide the global header/topbar ONLY on the login page #}
+<style>
+  header, nav, .navbar, .topbar, .app-header, .main-nav, .global-header {
+    display: none !important;
+  }
+  body { padding-top: 0 !important; }
+
+  /* Fallback styling in case the form widget has no Tailwind classes */
+  form input[type="email"]{
+    width:100%;
+    height:44px;
+    border-radius:0.5rem;           /* rounded-lg */
+    border:1px solid #e5e7eb;       /* gray-200 */
+    padding:0 0.875rem;             /* px-3.5 */
+    background:#fafafa;             /* gray-50 */
+  }
+  form input[type="email"]:focus{
+    outline:none;
+    border-color:#4f46e5;           /* indigo-600 */
+    box-shadow:0 0 0 3px rgba(79,70,229,0.15);
+    background:#fff;
+  }
+</style>
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-blue-50 py-10">
+  <div class="w-full max-w-xl">
+    <div class="bg-white shadow-xl rounded-2xl p-8 md:p-10">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 13l3 3 7-7" />
+          </svg>
+        </div>
+        <div class="text-2xl font-semibold">SRE Track</div>
       </div>
-      <h1 class="ml-3 text-xl font-semibold">CRM</h1>
+
+      {% if messages %}
+        <div class="space-y-2 mb-4">
+          {% for m in messages %}
+            <div class="px-3 py-2 text-sm rounded border
+                        {% if m.tags == 'success' %}bg-green-50 text-green-700 border-green-200
+                        {% elif m.tags == 'error' %}bg-red-50 text-red-700 border-red-200
+                        {% else %}bg-gray-50 text-gray-700 border-gray-200{% endif %}">
+              {{ m }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if form.non_field_errors %}
+        <div class="px-3 py-2 text-sm rounded border bg-red-50 text-red-700 border-red-200 mb-4">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <h2 class="text-lg font-bold mb-1">Connexion</h2>
+      <p class="text-sm text-gray-500 mb-6">
+        Entrez votre adresse e-mail d’entreprise. Aucun mot de passe requis.
+      </p>
+
+      <form method="post" class="space-y-5">
+        {% csrf_token %}
+
+        <div>
+          <label class="block text-sm text-gray-600 mb-1" for="{{ form.email.id_for_label }}">
+            Adresse e-mail
+          </label>
+          {{ form.email }}
+          {% if form.email.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.email.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+          class="w-full h-11 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition">
+          Se connecter
+        </button>
+      </form>
+
+      <p class="text-xs text-gray-400 mt-6">
+        Utilisateurs internes : utilisez votre adresse <span class="font-medium">@lgisolutions.com</span>.
+      </p>
     </div>
-    <h2 class="text-lg font-semibold mb-2">Connexion</h2>
-    <form method="post" class="space-y-4">
-      {% csrf_token %}
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Nom d’utilisateur ou e-mail</label>
-        <input type="text" name="identifier" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" required/>
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Mot de passe</label>
-        <input type="password" name="password" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" required/>
-      </div>
-      <button class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Se connecter</button>
-    </form>
-    {% if messages %}
-      <div class="mt-4 space-y-2">
-        {% for m in messages %}
-          <div class="p-2 text-sm rounded bg-red-50 text-red-700">{{ m }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-    <p class="mt-6 text-xs text-gray-500">Utilisateurs de démo: utilisez l'email semé et le mot de passe <span class="font-semibold">ChangeMe2025!</span>.</p>
   </div>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-</body>
-</html>
+</div>
+{% endblock %}

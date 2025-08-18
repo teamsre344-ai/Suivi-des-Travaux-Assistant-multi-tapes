@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',  # intcomma, naturaltime, etc.
+    'django.contrib.humanize',
     'crm_app',
     'crispy_forms',
     'crispy_bootstrap5',
@@ -89,9 +89,15 @@ else:
         }
     }
 
+# --- Passwordless login flags ---
+PASSWORDLESS_LOGIN = True                      # enable email-only login
+PASSWORDLESS_ALLOWED_DOMAINS = ["lgisolutions.com"]
+PASSWORDLESS_FALLBACK_DOMAINS = ["logibec.com", "logibe.com"]  # old domains that we will match by local-part
+PASSWORDLESS_AUTO_UPDATE_EMAIL = True          # auto-rewrite to the @lgisolutions.com email on first login
+
+
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
-
 
 # --- I18N / TZ ---
 LANGUAGE_CODE = 'fr-ca'
@@ -102,7 +108,7 @@ USE_TZ = True
 # --- Static / Media ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'crm_app' / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # needed for collectstatic
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # --- Auth redirects ---
 LOGIN_URL = 'login'
@@ -110,6 +116,88 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# -------------------------------
+# Team directory & email login
+# -------------------------------
+# Allow passwordless sign-in if the email is whitelisted below.
+TEAM_EMAIL_LOGIN_ENABLED = True
+
+# Map company emails to canonical profile (names + full role title shown in UI).
+# ➜ Fill this with real emails/titles from your org chart.
+TEAM_DIRECTORY = {
+    "mahmoud.feki@lgisolutions.com": {
+        "first_name": "Mahmoud", "last_name": "Feki",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "ruben.geghamyan@lgisolutions.com": {
+        "first_name": "Ruben", "last_name": "Geghamyan",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "eric.lamontagne@lgisolutions.com": {
+        "first_name": "Eric", "last_name": "Lamontagne",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "frederic.rousseau@lgisolutions.com": {
+        "first_name": "Frédéric", "last_name": "Rousseau",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "eric.champagne@lgisolutions.com": {
+        "first_name": "Éric", "last_name": "Champagne",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "marc.banville@lgisolutions.com": {
+        "first_name": "Marc", "last_name": "Banville",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "halimatou.ly@lgisolutions.com": {
+        "first_name": "Halimatou", "last_name": "Ly",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "romeo.kutnjem@lgisolutions.com": {
+        "first_name": "Roméo", "last_name": "Kutnjem",
+        "role": "Spécialiste, déploiement des solutions", "is_manager": False,
+    },
+    "sylvain.berthiaume@lgisolutions.com": {
+        "first_name": "Sylvain", "last_name": "Berthiaume",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "masamba.lema@lgisolutions.com": {
+        "first_name": "Masamba", "last_name": "Lema",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+    "taoufik.toughrai@lgisolutions.com": {
+        "first_name": "Taoufik", "last_name": "Toughrai",
+        "role": "Spécialiste, déploiement des solutions", "is_manager": False,
+    },
+    "frank.binde@lgisolutions.com": {
+        "first_name": "Mambibe Frank", "last_name": "Merari",
+        "role": "Spécialiste, déploiement des solutions", "is_manager": False,
+    },
+    "dounia.elbaine@lgisolutions.com": {
+        "first_name": "Dounia", "last_name": "ElBaine",
+        "role": "Conseiller en planification", "is_manager": False,
+    },
+    "ann-pier.lucas-mercier@lgisolutions.com": {
+        "first_name": "Ann-Pier", "last_name": "Lucas-Mercier",
+        "role": "Conseiller en planification", "is_manager": False,
+    },
+    "jessyca.lantagne@lgisolutions.com": {
+        "first_name": "Jessyca", "last_name": "Lantagne",
+        "role": "Conseiller en planification", "is_manager": False,
+    },
+    "pierre.veillard@lgisolutions.com": {
+        "first_name": "Pierre Ernest", "last_name": "Veillard",
+        "role": "Spécialiste principal, déploiement", "is_manager": False,
+    },
+
+    # NEW – Patrick (manager)
+    "patrick.savard@lgisolutions.com": {
+        "first_name": "Patrick", "last_name": "Savard",
+        "role": "Gestionnaire d’équipe, déploiement (600-IFS – Services gérés)",
+        "is_manager": True,
+    },
+}
 
 # --- Optional: basic hardening when DEBUG=False ---
 if not DEBUG:
