@@ -41,9 +41,15 @@ class CoordinationDeploymentForm(forms.Form):
         help_text="Sélectionnez le spécialiste qui exécutera le déploiement"
     )
     
-    gestionnaire_projet = forms.ModelChoiceField(
+    gestionnaire_projet = forms.ChoiceField(
         label="Gestionnaire de Projet",
-        queryset=Technician.get_planners_and_managers(),
+        choices=[
+            ("", "---------"),
+            ("Patrick Savard", "Patrick Savard"),
+            ("Jessyca Lantagne", "Jessyca Lantagne"),
+            ("Mamdouh Mikhail", "Mamdouh Mikhail"),
+            ("Dounia EIBaine", "Dounia EIBaine"),
+        ],
         required=False,
         widget=forms.Select(attrs={"class": "form-select"}),
         help_text="Sélectionnez le gestionnaire de projet"
