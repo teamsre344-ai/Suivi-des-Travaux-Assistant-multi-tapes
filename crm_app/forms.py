@@ -31,7 +31,7 @@ class CoordinationDeploymentForm(forms.Form):
     project_number = forms.CharField(
         label="Numéro de projet",
         max_length=50,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "PN-12345"})
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "PRJXXXX"})
     )
 
     technician = forms.ModelChoiceField(

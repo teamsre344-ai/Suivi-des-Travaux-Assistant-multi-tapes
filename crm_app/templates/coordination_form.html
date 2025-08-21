@@ -49,7 +49,16 @@
       </div>
 
       <!-- Row 2: Deployment Specialist and Project Manager -->
-      a
+      <div class="col-md-6">
+        <label class="form-label" for="{{ form.technician.id_for_label }}">
+          <i class="bi bi-person-fill-gear me-2"></i>
+          Spécialiste déploiement assigné
+        </label>
+        {{ form.technician }}
+        {% if form.technician.help_text %}
+          <div class="form-text">{{ form.technician.help_text }}</div>
+        {% endif %}
+      </div>
 
       <div class="col-md-6">
         <label class="form-label" for="{{ form.gestionnaire_projet.id_for_label }}">
