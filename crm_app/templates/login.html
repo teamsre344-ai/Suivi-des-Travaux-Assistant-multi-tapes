@@ -11,7 +11,7 @@
   body { padding-top: 0 !important; }
 
   /* Fallback styling in case the form widget has no Tailwind classes */
-  form input[type="email"]{
+  form input[type="email"], form input[type="password"]{
     width:100%;
     height:44px;
     border-radius:0.5rem;           /* rounded-lg */
@@ -19,7 +19,7 @@
     padding:0 0.875rem;             /* px-3.5 */
     background:#fafafa;             /* gray-50 */
   }
-  form input[type="email"]:focus{
+  form input[type="email"]:focus, form input[type="password"]:focus{
     outline:none;
     border-color:#4f46e5;           /* indigo-600 */
     box-shadow:0 0 0 3px rgba(79,70,229,0.15);
@@ -60,7 +60,7 @@
 
       <h2 class="text-lg font-bold mb-1">Connexion</h2>
       <p class="text-sm text-gray-500 mb-6">
-        Entrez votre adresse e-mail d’entreprise. Aucun mot de passe requis.
+        Entrez votre adresse e-mail d’entreprise et votre mot de passe.
       </p>
 
       <form method="post" class="space-y-5">
@@ -73,6 +73,16 @@
           {{ form.email }}
           {% if form.email.errors %}
             <p class="mt-1 text-sm text-red-600">{{ form.email.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block text-sm text-gray-600 mb-1" for="{{ form.password.id_for_label }}">
+            Mot de passe
+          </label>
+          {{ form.password }}
+          {% if form.password.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.password.errors|striptags }}</p>
           {% endif %}
         </div>
 

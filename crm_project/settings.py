@@ -115,6 +115,11 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
+AUTHENTICATION_BACKENDS = [
+    'crm_app.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # -------------------------------
@@ -176,7 +181,7 @@ TEAM_DIRECTORY = {
     },
     "dounia.elbaine@lgisolutions.com": {
         "first_name": "Dounia", "last_name": "ElBaine",
-        "role": "Conseiller en planification", "is_manager": False,
+        "role": "Conseiller en planification", "is_manager": True,
     },
     "ann-pier.lucas-mercier@lgisolutions.com": {
         "first_name": "Ann-Pier", "last_name": "Lucas-Mercier",
@@ -184,7 +189,7 @@ TEAM_DIRECTORY = {
     },
     "jessyca.lantagne@lgisolutions.com": {
         "first_name": "Jessyca", "last_name": "Lantagne",
-        "role": "Conseiller en planification", "is_manager": False,
+        "role": "Conseiller en planification", "is_manager": True,
     },
     "pierre.veillard@lgisolutions.com": {
         "first_name": "Pierre Ernest", "last_name": "Veillard",

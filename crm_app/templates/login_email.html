@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+  <h1 class="text-xl font-semibold mb-4">Connexion sans mot de passe</h1>
+  <form method="post" class="space-y-3">
+    {% csrf_token %}
+    <label class="block text-sm">Adresse e-mail</label>
+    {{ form.email }}
+    <button class="mt-2 px-4 py-2 rounded bg-blue-600 text-white">Recevoir le lien</button>
+  </form>
+  <p class="text-xs text-gray-500 mt-3">Nous enverrons un lien de connexion valable 15 minutes.</p>
+</div>
+{% endblock %}

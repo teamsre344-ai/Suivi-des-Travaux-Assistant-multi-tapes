@@ -1,64 +1,304 @@
 from django import forms
-from .models import Project
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from .models import Project, Technician
 
-# ---------- Passwordless ----------
-class PasswordlessLoginForm(forms.Form):
+User = get_user_model()
+
+
+# ---------- Standard Login Form ----------
+class LoginForm(forms.Form):
     email = forms.EmailField(
         label="Adresse e-mail",
         widget=forms.EmailInput(attrs={
             "autocomplete": "email",
             "placeholder": "prenom.nom@lgisolutions.com",
-            "class": "tw-input w-full",
+            "class": "form-control",
+        })
+    )
+    password = forms.CharField(
+        label="Mot de passe",
+        widget=forms.PasswordInput(attrs={
+            "autocomplete": "current-password",
+            "class": "form-control",
+            "placeholder": "Saisissez votre mot de passe",
         })
     )
 
-# Keep old import sites happy if anything still imports LoginForm
-LoginForm = PasswordlessLoginForm
+
+# ---------- NEW: Coordination & Déploiement (first step for planners/managers) ----------
+class CoordinationDeploymentForm(forms.Form):
+    project_number = forms.CharField(
+        label="Numéro de projet",
+        max_length=50,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "PN-12345"})
+    )
+
+    technician = forms.ModelChoiceField(
+        label="Spécialiste déploiement assigné",
+        queryset=Technician.get_deployment_specialists(),
+        widget=forms.Select(attrs={"class": "form-select"}),
+        help_text="Sélectionnez le spécialiste qui exécutera le déploiement"
+    )
+    
+    gestionnaire_projet = forms.ModelChoiceField(
+        label="Gestionnaire de Projet",
+        queryset=Technician.get_planners_and_managers(),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        help_text="Sélectionnez le gestionnaire de projet"
+    )
+
+    coordination_board = forms.ImageField(
+        label="Le Tableau de Coordination des Travaux (image)",
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": "image/png,image/jpeg,image/webp"})
+    )
+
+    STATUS_CHOICES_MINI = [
+        ('waiting_on_client', 'En attente du client'),
+        ('waiting_on_internal', 'En attente interne'),
+        ('preparation', 'Préparation'),
+        ('production', 'Production'),
+    ]
+    status = forms.ChoiceField(
+        label="Statut du projet",
+        choices=STATUS_CHOICES_MINI,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    # Préparation
+    prep_date = forms.DateField(
+        label="Date de préparation",
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"})
+    )
+    prep_start_time = forms.TimeField(
+        label="Heure début (préparation)",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"})
+    )
+    prep_end_time = forms.TimeField(
+        label="Heure fin (préparation)",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"})
+    )
+
+    # Production
+    prod_date = forms.DateField(
+        label="Date de production",
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"})
+    )
+    prod_start_time = forms.TimeField(
+        label="Heure début (production)",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"})
+    )
+    prod_end_time = forms.TimeField(
+        label="Heure fin (production)",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"})
+    )
 
 
-# ---------- Project form ----------
+# ---------- Project form (existing) ----------
 class ProjectForm(forms.ModelForm):
+    assigned_to = forms.ModelChoiceField(
+        label="Assign to",
+        queryset=User.objects.filter(is_active=True).order_by('first_name', 'last_name'),
+        required=False,
+        help_text="Choisir la personne qui travaillera sur ce projet"
+    )
+
+    # Native datetime pickers (HTML5)
+    start_at = forms.DateTimeField(
+        label="Date et heure de début",
+        required=False,
+        input_formats=['%Y-%m-%dT%H:%M'],
+        widget=forms.DateTimeInput(attrs={
+            'type': 'datetime-local',
+            'class': 'form-control shadow-sm',
+        })
+    )
+    end_at = forms.DateTimeField(
+        label="Date et heure de fin",
+        required=False,
+        input_formats=['%Y-%m-%dT%H:%M'],
+        widget=forms.DateTimeInput(attrs={
+            'type': 'datetime-local',
+            'class': 'form-control shadow-sm',
+        })
+    )
+
     class Meta:
         model = Project
         fields = [
-            'project_number','environment','client_name','product','work_type',
-            'database_name','db_server','app_server','fuse_validation','certificate_validation',
-            'status','sre_name','sre_phone',
+            # Assignation
+            'assigned_to',
+
+            # Base + Coordination (fusionnées)
+            'project_number', 'environment', 'client_name', 'product', 'work_type',
+            'database_name', 'db_server', 'app_server', 'fuse_validation', 'certificate_validation',
+            'status', 'sre_name', 'sre_phone',
+
+            # NEW date+time fields
+            'start_at', 'end_at',
+
+            'travaux_a_faire', 'responsable_travaux',
+            'version_actuelle', 'version_cible', 'tables_m34',
+            'versions_matrix',  # multiline paste area
+            'contact_tech_client_to', 'contact_tech_client_cc', 'autres_ressources_client_cc',
+            'courriel_confirmation_client', 'note_importante', 'taches_installations',
+            'equipe_dev_ajouter', 'equipe_integration_ajouter', 'bi_a_valider',
+            'autres_produits_verifier', 'gestionnaire_projet',
+
+            # NEW: planning board + planning windows (visible if you include them in template)
+            'coordination_board',
+            'prep_date', 'prep_start_time', 'prep_end_time',
+            'prod_date', 'prod_start_time', 'prod_end_time',
         ]
         widgets = {
-            'environment': forms.Select(attrs={'class':'tw-input'}),
-            'product': forms.Select(attrs={'class':'tw-input'}),
-            'work_type': forms.Select(attrs={'class':'tw-input'}),
-            'status': forms.Select(attrs={'class':'tw-input'}),
+            'note_importante': forms.Textarea(attrs={'rows': 3}),
+            'taches_installations': forms.Textarea(attrs={'rows': 3}),
+            'contact_tech_client_to': forms.Textarea(attrs={'rows': 2}),
+            'contact_tech_client_cc': forms.Textarea(attrs={'rows': 2}),
+            'autres_ressources_client_cc': forms.Textarea(attrs={'rows': 2}),
+            'versions_matrix': forms.Textarea(attrs={
+                'rows': 12,
+                'class': 'form-control shadow-sm',
+                'style': 'font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;',
+                'placeholder': "Collez ici le tableau des versions (Markdown / CSV / texte)."
+            }),
+            'gestionnaire_projet': forms.TextInput(attrs={
+                "class": "form-control shadow-sm",
+                "placeholder": "Nom du gestionnaire de projet",
+            }),
         }
 
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+        super().__init__(*args, **kwargs)
 
-# ---------- Checklist JSON upload ----------
+        # Apply Tailwind CSS classes consistently
+        for name, field in self.fields.items():
+            w = field.widget
+            
+            # Use the .tw-input class defined in base.html for a consistent look
+            # We remove Bootstrap classes and add the Tailwind one.
+            current_classes = w.attrs.get("class", "")
+            current_classes = current_classes.replace("form-control", "").replace("form-select", "")
+            w.attrs["class"] = f"tw-input {current_classes}".strip()
+
+            # Add placeholder if not already set, but avoid for certain input types
+            if not isinstance(w, (forms.CheckboxInput, forms.RadioSelect, forms.FileInput, forms.ClearableFileInput)):
+                w.attrs.setdefault("placeholder", field.label)
+
+        # Prefill datetime-local for editing
+        if instance and instance.pk:
+            for fname in ("start_at", "end_at"):
+                if fname in self.fields:
+                    dt = getattr(instance, fname, None)
+                    if dt:
+                        dt_local = timezone.localtime(dt) if timezone.is_aware(dt) else dt
+                        self.fields[fname].widget.attrs['value'] = dt_local.strftime('%Y-%m-%dT%H:%M')
+
+    def clean(self):
+        data = super().clean()
+        start = data.get('start_at')
+        end = data.get('end_at')
+        if start and end and end < start:
+            self.add_error('end_at', "La date/heure de fin doit être postérieure au début.")
+        return data
+
+
+# ---------- Checklist JSON upload (used by views) ----------
+class CoordinationCreateForm(forms.ModelForm):
+    """
+    Minimal planner/manager screen (legacy/alternate):
+    - project_number
+    - assign to Technician
+    - upload 'tableau de coordination' image (preview in template)
+    - planning windows (prep/prod) and status (limited choices)
+    """
+    technician = forms.ModelChoiceField(
+        label="Technicien assigné",
+        queryset=Technician.objects.select_related('user').order_by('user__first_name', 'user__last_name'),
+        help_text="Sélectionnez le spécialiste déploiement responsable.",
+        required=True,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    coordination_board = forms.ImageField(
+        label="Tableau de coordination des travaux (image)",
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": "image/*"})
+    )
+
+    # Planning windows
+    prep_date = forms.DateField(label="Date de préparation", required=False, widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}))
+    prep_start_time = forms.TimeField(label="Heure début (préparation)", required=False, widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+    prep_end_time = forms.TimeField(label="Heure fin (préparation)", required=False, widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+
+    prod_date = forms.DateField(label="Date de production", required=False, widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}))
+    prod_start_time = forms.TimeField(label="Heure début (production)", required=False, widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+    prod_end_time = forms.TimeField(label="Heure fin (production)", required=False, widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+
+    STATUS_LIMIT = [
+        ('assigned', 'Assigné'),
+        ('preparation', 'Préparation'),
+        ('production', 'Production'),
+        ('waiting_on_client', 'En attente du client'),
+        ('waiting_on_internal', 'En attente interne'),
+    ]
+    status = forms.ChoiceField(label="Statut", choices=STATUS_LIMIT, initial='assigned', widget=forms.Select(attrs={"class": "form-select"}))
+
+    class Meta:
+        model = Project
+        fields = ["project_number", "status", "coordination_board",
+                  "prep_date", "prep_start_time", "prep_end_time",
+                  "prod_date", "prod_start_time", "prod_end_time"]
+        widgets = {
+            "project_number": forms.TextInput(attrs={"class": "form-control", "placeholder": "No. de projet"}),
+        }
+
+    def clean(self):
+        data = super().clean()
+        ps, pe = data.get("prep_start_time"), data.get("prep_end_time")
+        if ps and pe and pe <= ps:
+            self.add_error("prep_end_time", "L'heure de fin doit être après l'heure de début.")
+        ps, pe = data.get("prod_start_time"), data.get("prod_end_time")
+        if ps and pe and pe <= ps:
+            self.add_error("prod_end_time", "L'heure de fin doit être après l'heure de début.")
+        return data
+
+
 class ChecklistJSONUploadForm(forms.Form):
     json_file = forms.FileField(help_text="Fichier .json contenant les items de checklist")
 
     def clean_json_file(self):
         f = self.cleaned_data['json_file']
-        if not f.name.lower().endswith(".json"):
+        name = f.name.lower()
+        if not name.endswith(".json"):
             raise forms.ValidationError("Veuillez téléverser un fichier .json")
-        if f.size > 2 * 1024 * 1024:
+        if f.size and f.size > 2 * 1024 * 1024:
             raise forms.ValidationError("Fichier trop volumineux (max 2 Mo)")
         return f
 
 
-# ---------- Notes / Images (multi-upload, safe for Django) ----------
+# ---------- Notes / Images for checklist items (used by views) ----------
 class MultiFileInput(forms.ClearableFileInput):
-    # This avoids the “doesn't support uploading multiple files” error
     allow_multiple_selected = True
+
 
 class ChecklistItemUpdateForm(forms.Form):
     text = forms.CharField(
         label="Commentaire",
         required=False,
-        widget=forms.Textarea(attrs={'rows': 2, 'class': 'w-full border rounded p-2'})
+        widget=forms.Textarea(attrs={'rows': 2, 'class': 'form-control w-100'})
     )
     images = forms.FileField(
         label="Images",
         required=False,
-        widget=MultiFileInput(attrs={'multiple': True, 'accept': 'image/*'})
+        widget=MultiFileInput(attrs={'multiple': True, 'accept': 'image/*', 'class': 'form-control'})
     )

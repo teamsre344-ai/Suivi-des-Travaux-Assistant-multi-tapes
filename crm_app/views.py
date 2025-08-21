@@ -1,10 +1,12 @@
 from datetime import date, datetime, timedelta
 import io
 import json
+from typing import Optional
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.contrib import messages
-from django.contrib.auth import login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q, F, Count, Avg, DurationField, ExpressionWrapper
@@ -13,15 +15,18 @@ from django.http import HttpResponse, FileResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from xhtml2pdf import pisa
 
 from .forms import (
-    PasswordlessLoginForm,
-    ProjectForm,
+    LoginForm,
     ChecklistJSONUploadForm,
     ChecklistItemUpdateForm,
+    CoordinationDeploymentForm,
+    ProjectForm,
 )
+
 from .models import (
     ChecklistItem,
     Project,
@@ -34,6 +39,115 @@ from .models import (
 User = get_user_model()
 
 # --------------------------------
+
+@login_required
+def coordination_form_view(request):
+    """
+    Standalone route for the first-step 'Coordination & Déploiement' page.
+    Only managers / planification counselors can access it.
+    """
+    tech = _sync_user_and_technician_from_directory(request.user)
+    # Only allow managers or planification counselors
+    if not _is_planner_or_manager_from_tech(tech):
+        # You can use PermissionDenied to show 403, or redirect to the normal create page.
+        # raise PermissionDenied("Accès réservé à la planification / gestion.")
+        return redirect('project_create')
+
+    if request.method == "POST":
+        form = CoordinationDeploymentForm(request.POST, request.FILES)
+        if form.is_valid():
+            pn = form.cleaned_data["project_number"].strip()
+            tgt_tech = form.cleaned_data["technician"]
+            img = form.cleaned_data.get("coordination_board")
+            status = form.cleaned_data["status"]
+
+            # Create minimal project; the deployment specialist will complete details later.
+            p = Project.objects.create(
+                project_number=pn,
+                environment='test',  # default, can be changed later
+                client_name='',
+                product='',
+                work_type='Migration',
+                created_by=request.user,
+                technician=tgt_tech,
+                assigned_to=tgt_tech.user if tgt_tech else None,
+                status=status,
+                title=f"Coordination — {pn}",
+            )
+
+            # Save the selected project manager's name
+            p.gestionnaire_projet = form.cleaned_data.get("gestionnaire_projet", "")
+
+            # Planning windows + uploaded board
+            p.prep_date = form.cleaned_data.get("prep_date")
+            p.prep_start_time = form.cleaned_data.get("prep_start_time")
+            p.prep_end_time = form.cleaned_data.get("prep_end_time")
+            p.prod_date = form.cleaned_data.get("prod_date")
+            p.prod_start_time = form.cleaned_data.get("prod_start_time")
+            p.prod_end_time = form.cleaned_data.get("prod_end_time")
+            if img:
+                p.coordination_board = img
+            p.save()
+
+            messages.success(request, "Projet créé et assigné au technicien.")
+            return redirect('project_detail', pk=p.pk)
+    else:
+        form = CoordinationDeploymentForm()
+
+    return render(request, "coordination_form.html", {"form": form, "technician": tech})
+
+
+@login_required
+@require_POST
+@csrf_exempt
+def project_wizard_save(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    project_number = data.get("projet")
+    if not project_number:
+        return JsonResponse({"error": "Project number is required"}, status=400)
+
+    project, created = Project.objects.get_or_create(
+        project_number=project_number,
+        defaults={
+            "created_by": request.user,
+            "technician": _sync_user_and_technician_from_directory(request.user),
+        },
+    )
+
+    project.environment = data.get("env", project.environment)
+    project.client_name = data.get("client", project.client_name)
+    project.product = data.get("produit", project.product)
+    project.date = data.get("date") or project.date
+    project.database_name = data.get("nomBD", project.database_name)
+    project.db_server = data.get("serveurBD", project.db_server)
+    project.app_server = data.get("serveurApp", project.app_server)
+    project.work_type = data.get("typeTravaux", project.work_type)
+    
+    technician_name = data.get("technicien")
+    if technician_name:
+        # This is a simplified lookup. A more robust solution would handle name conflicts.
+        technician_user = User.objects.filter(first_name__iexact=technician_name.split(' ')[0]).first()
+        if technician_user:
+            project.technician, _ = Technician.objects.get_or_create(user=technician_user)
+
+    project.sre_name = data.get("sreName", project.sre_name)
+    project.sre_phone = data.get("srePhone", project.sre_phone)
+    project.fuse_validation = data.get("valFuse", project.fuse_validation)
+    project.certificate_validation = data.get("valCert", project.certificate_validation)
+    
+    # Storing checklist and timeline data as JSON
+    project.checklist_data = {"checks": data.get("checks")}
+    # project.timeline_data = {"timeline": data.get("timeline"), "timelineExtras": data.get("timelineExtras")}
+
+    project.save()
+
+    return JsonResponse({"message": "Project saved successfully", "projectId": project.pk})
+
+
 # Helpers for team directory/roles
 # --------------------------------
 def _directory_entry_for(email: str) -> dict | None:
@@ -42,11 +156,32 @@ def _directory_entry_for(email: str) -> dict | None:
     directory = getattr(settings, "TEAM_DIRECTORY", {}) or {}
     return directory.get(email.lower())
 
-def _sync_user_and_technician_from_directory(user: User) -> Technician:
+# --- Role helpers that accept a *User* ---
+def _dir_entry_for_user(user):
+    email = (getattr(user, "email", "") or "").lower()
+    return (getattr(settings, "TEAM_DIRECTORY", {}) or {}).get(email, {})
+
+def user_is_manager(user) -> bool:
+    entry = _dir_entry_for_user(user)
+    return bool(entry.get("is_manager", False))
+
+def user_is_planification(user) -> bool:
+    role = (_dir_entry_for_user(user).get("role") or "").lower()
+    return "conseiller" in role and "planification" in role
+
+def user_is_deployment_specialist(user) -> bool:
+    role = (_dir_entry_for_user(user).get("role") or "").lower()
+    return ("spécialis" in role) or ("deploiement" in role) or ("déploiement" in role)
+
+
+def _sync_user_and_technician_from_directory(user: Optional[User]) -> Optional[Technician]:
     """
     Ensure the User (names) and Technician (role/is_manager) reflect TEAM_DIRECTORY.
-    If no directory entry, keep existing values (role defaults to 'Technicien').
+    If user is anonymous, return None. If no directory entry, keep existing values (role defaults to 'Technicien').
     """
+    if not getattr(user, "is_authenticated", False):
+        return None
+
     entry = _directory_entry_for(user.email)
     defaults_role = (entry or {}).get("role") or "Technicien"
     tech, _ = Technician.objects.get_or_create(user=user, defaults={'role': defaults_role})
@@ -71,6 +206,7 @@ def _sync_user_and_technician_from_directory(user: User) -> Technician:
                 tech.save(update_fields=["is_manager"])
 
     return tech
+
 
 def _normalize_email_for_lookup(raw: str) -> list[str]:
     """
@@ -102,37 +238,45 @@ def _normalize_email_for_lookup(raw: str) -> list[str]:
             out.append(c2); seen.add(c2)
     return out
 
+
+def _is_planner_or_manager_from_tech(tech: Optional[Technician]) -> bool:
+    """
+    True if the technician is a manager or has a role containing 'planification'
+    (case-insensitive, French/English variants).
+    """
+    if not tech:
+        return False
+    if getattr(tech, "is_manager", False):
+        return True
+    role = (tech.role or "").lower()
+    return "planification" in role or "planner" in role or "conseiller" in role
+
+
 # ------------------ Auth ------------------
 def login_view(request):
-    """
-    Passwordless login:
-    - asks for email only
-    - if a matching User.email exists (case-insensitive), log them in
-    """
     if request.user.is_authenticated:
         return redirect('home')
 
-    form = PasswordlessLoginForm(request.POST or None)
+    form = LoginForm(request.POST or None)
 
     if request.method == 'POST' and form.is_valid():
-        raw = form.cleaned_data['email'].strip()
-        # Support both lgisolutions.com and logibec.com + bare local part
-        for candidate in _normalize_email_for_lookup(raw):
-            user = User.objects.filter(email__iexact=candidate).first()
-            if user:
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                messages.success(request, "Connexion réussie.")
-                return redirect('home')
-
-        messages.error(request, "Aucun utilisateur trouvé avec cet e-mail.")
-        # fall through to re-render form
-
+        email = form.cleaned_data['email'].strip()
+        password = form.cleaned_data['password']
+        user = authenticate(request, username=email, password=password)
+        if user:
+            login(request, user)
+            messages.success(request, "Connexion réussie.")
+            return redirect('home')
+        else:
+            messages.error(request, "E-mail ou mot de passe invalide.")
     return render(request, 'login.html', {'form': form})
+
 
 @login_required
 def logout_view(request):
     logout(request)
     return redirect('login')
+
 
 # ------------------ Dashboard ------------------
 @login_required
@@ -298,12 +442,14 @@ def home_view(request):
     }
     return render(request, 'home.html', context)
 
+
 @login_required
 def analytics_view(request):
     tech = _sync_user_and_technician_from_directory(request.user)
     is_manager = getattr(tech, 'is_manager', False)
     projects = Project.objects.all() if is_manager else Project.objects.filter(technician=tech)
     return render(request, "analytics.html", {"technician": tech, "total": projects.count()})
+
 
 # ------------------ Project list ------------------
 @login_required
@@ -350,7 +496,7 @@ def project_list_view(request):
     if created_by_me:
         qs = qs.filter(created_by=request.user)
     if assigned_to_me:
-        qs = qs.filter(technician=tech)
+        qs = qs.filter(Q(technician=tech) | Q(assigned_to=request.user))
 
     def _parse_date(s):
         try:
@@ -432,6 +578,7 @@ def project_list_view(request):
     }
     return render(request, 'project_list.html', context)
 
+
 # ------------------ Global search ------------------
 @login_required
 def search_view(request):
@@ -487,71 +634,51 @@ def search_view(request):
     }
     return render(request, 'search_results.html', ctx)
 
-# ------------------ Create / Detail ------------------
+
+# ------------------ Edit existing project ------------------
+@login_required
+def project_update_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    # The new form handles everything client-side, so we just render the page.
+    # We can pass project data to the template if the wizard needs to be pre-filled.
+    return render(request, "project_form.html", {"project": project})
+
+
+# ------------------ Create (role-based flow) ------------------
+
+def _is_planner_or_manager(user) -> bool:
+    tech = _sync_user_and_technician_from_directory(user)
+    role = (getattr(tech, "role", "") or "").lower()
+    return bool(getattr(tech, "is_manager", False) or "planification" in role)
+
 @login_required
 def project_create_view(request):
+    """
+    This view now simply renders the wizard form.
+    The form is self-contained and will post data to the new save view.
+    """
     tech = _sync_user_and_technician_from_directory(request.user)
 
-    ruleset_name = (request.GET.get('ruleset') or '').strip()
-    ruleset = None
-    if ruleset_name:
-        from .models import ProjectRuleSet
-        ruleset = ProjectRuleSet.objects.filter(name=ruleset_name).first()
+    # Role-based redirection
+    if _is_planner_or_manager_from_tech(tech):
+        return redirect('coordination_form')
 
     if request.method == 'POST':
-        form = ProjectForm(request.POST)
+        form = ProjectForm(request.POST, request.FILES)
         if form.is_valid():
-            p = form.save(commit=False)
-            p.created_by = request.user
-            p.technician = tech
-            env_label = 'Test' if p.environment == 'test' else 'Production'
-            p.title = f"{env_label} — {p.client_name} — {p.product} — {p.project_number}"
-
-            if ruleset:
-                p.ruleset = ruleset
-                if ruleset.default_checklist:
-                    p.checklist_data = ruleset.default_checklist
-
-            if not p.checklist_data:
-                checklist_items = [
-                    "Demander les accès pour tous les serveurs",
-                    "Tester l'application (fonctionnement)",
-                    "Valider la version applicative, nom BD, établissement",
-                    "Valider l'heure début/fin du backup",
-                    "Valider les prérequis selon le type de travaux",
-                    "Suivre la procédure selon le produit et le type de travaux",
-                    "Valider FUSE",
-                    "Valider certificats",
-                    "Accord ROLLBACK — DBA + Responsable",
-                    "Validation du bon fonctionnement avec le client",
-                ]
-                p.checklist_data = {'items': [{'label': x, 'completed': False} for x in checklist_items]}
-
-            p.save()
-
-            for idx, item in enumerate((p.checklist_data or {}).get('items', [])):
-                ChecklistItem.objects.create(
-                    project=p,
-                    label=item.get('label', f'Item {idx+1}'),
-                    order=idx,
-                    completed=bool(item.get('completed'))
-                )
-
-            messages.success(request, 'Projet créé avec succès.')
-            return redirect('project_detail', pk=p.pk)
+            project = form.save(commit=False)
+            project.created_by = request.user
+            project.technician = tech
+            project.save()
+            messages.success(request, "Projet créé avec succès.")
+            return redirect('project_detail', pk=project.pk)
     else:
-        initial = {}
-        if ruleset:
-            if ruleset.default_environment:
-                initial['environment'] = ruleset.default_environment
-            if ruleset.default_product:
-                initial['product'] = ruleset.default_product
-            if ruleset.default_work_type:
-                initial['work_type'] = ruleset.default_work_type
-        form = ProjectForm(initial=initial)
+        form = ProjectForm()
 
     return render(request, 'project_form.html', {'form': form, 'technician': tech})
 
+
+# ------------------ Detail ------------------
 @login_required
 def project_detail_view(request, pk):
     tech = _sync_user_and_technician_from_directory(request.user)
@@ -559,7 +686,28 @@ def project_detail_view(request, pk):
         Project, Q(pk=pk) & (Q(technician=tech) | Q(created_by=request.user))
     )
     is_creator = (p.created_by_id == request.user.id)
-    return render(request, 'project_detail.html', {'project': p, 'technician': tech, 'is_creator': is_creator})
+
+    # progress bar value for phases
+    total_phases = 3
+    phases_completed = p.phases_completed
+    phase_progress_pct = int(phases_completed * 100 / total_phases)
+
+    items = (ChecklistItem.objects
+             .filter(project=p)
+             .prefetch_related('notes', 'images')
+             .order_by('order', 'id'))
+
+    context = {
+        'project': p,
+        'technician': tech,
+        'is_creator': is_creator,
+        'phase_progress_pct': phase_progress_pct,
+        'items': items,
+        'total_phases': total_phases,
+        'phases_completed': phases_completed,
+    }
+    return render(request, 'project_detail.html', context)
+
 
 # ------------------ Team dashboard ------------------
 @login_required
@@ -589,6 +737,7 @@ def team_dashboard_view(request):
         team.append({'tech': t, 'pct': pct, 'recent': recent})
 
     return render(request, 'team_dashboard.html', {'team': team, 'technician': tech})
+
 
 # ------------------ Phase updates ------------------
 @require_POST
@@ -643,6 +792,7 @@ def project_phase_update_view(request, pk):
 
     return redirect('project_detail', pk=p.pk)
 
+
 # =====================================================================
 # ===============  CHECKLIST: JSON import / notes / images  ===========
 # =====================================================================
@@ -684,6 +834,7 @@ def checklist_import_view(request, pk):
     messages.success(request, f"Checklist importée: {len(items)} étapes.")
     return redirect('project_detail', pk=project.pk)
 
+
 @login_required
 @require_POST
 def checklist_item_add_note_view(request, item_id):
@@ -709,6 +860,7 @@ def checklist_item_add_note_view(request, item_id):
     messages.success(request, "Note/Images ajoutées.")
     return redirect('project_detail', pk=item.project_id)
 
+
 @login_required
 @require_POST
 def checklist_item_toggle_view(request, item_id):
@@ -728,6 +880,7 @@ def checklist_item_toggle_view(request, item_id):
 
     messages.success(request, "Étape mise à jour.")
     return redirect('project_detail', pk=item.project_id)
+
 
 @login_required
 def project_checklist_pdf_view(request, pk):
@@ -756,6 +909,7 @@ def project_checklist_pdf_view(request, pk):
     pdf_io.seek(0)
     filename = f"Checklist_{project.project_number}.pdf" if project.project_number else "Checklist.pdf"
     return FileResponse(pdf_io, filename=filename, content_type='application/pdf')
+
 
 # --- Profile (kept for URL import) ---
 @login_required

@@ -1,0 +1,101 @@
+{# templates/crm_app/project_form.html #}
+{% extends "base.html" %}
+{% block content %}
+<h1>Nouveau projet</h1>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <!-- Section: Assignation -->
+  <fieldset style="margin-bottom:1rem;">
+    <legend>Assignation</legend>
+    <div class="form-group">
+      <label for="{{ form.assigned_to.id_for_label }}"><strong>Assign to</strong></label>
+      {{ form.assigned_to }}
+      <small class="form-text text-muted">{{ form.assigned_to.help_text }}</small>
+      {% for error in form.assigned_to.errors %}<div class="text-danger">{{ error }}</div>{% endfor %}
+    </div>
+  </fieldset>
+
+  <!-- Section: Infos de base -->
+  <fieldset style="margin-bottom:1rem;">
+    <legend>Informations de base</legend>
+    <div class="form-group">
+      <label for="{{ form.title.id_for_label }}">Titre</label>
+      {{ form.title }}
+      {% for error in form.title.errors %}<div class="text-danger">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="form-group">
+      <label for="{{ form.description.id_for_label }}">Description</label>
+      {{ form.description }}
+      {% for error in form.description.errors %}<div class="text-danger">{{ error }}</div>{% endfor %}
+    </div>
+  </fieldset>
+
+  <!-- Section: Coordination des déploiements -->
+  <fieldset style="margin-bottom:1rem;">
+    <legend>Coordination des déploiements</legend>
+
+    <div class="grid">
+      <div class="form-group"><label>Travaux à faire</label>{{ form.travaux_a_faire }}</div>
+      <div class="form-group"><label>Responsable des travaux</label>{{ form.responsable_travaux }}</div>
+      <div class="form-group"><label>Établissement</label>{{ form.etablissement }}</div>
+      <div class="form-group"><label>Projet</label>{{ form.projet_code }}</div>
+      <div class="form-group"><label>BD</label>{{ form.bd }}</div>
+      <div class="form-group"><label>Serveur BD</label>{{ form.serveur_bd }}</div>
+      <div class="form-group"><label>Version actuelle</label>{{ form.version_actuelle }}</div>
+      <div class="form-group"><label>Version à installer</label>{{ form.version_cible }}</div>
+      <div class="form-group"><label>Tables M34</label>{{ form.tables_m34 }}</div>
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+      <label>Contact technique client (TO)</label>
+      {{ form.contact_tech_client_to }}
+    </div>
+    <div class="form-group">
+      <label>Contact technique client (CC)</label>
+      {{ form.contact_tech_client_cc }}
+    </div>
+    <div class="form-group">
+      <label>Autres ressources client (CC)</label>
+      {{ form.autres_ressources_client_cc }}
+    </div>
+
+    <div class="form-group">
+      <label>Ressources internes LGI (en cc)</label>
+      {{ form.ressources_internes_cc }}
+    </div>
+
+    <div class="form-group">
+      <label>Courriel de confirmation client</label>
+      {{ form.courriel_confirmation_client }}
+    </div>
+
+    <div class="form-group">
+      <label>Note importante</label>
+      {{ form.note_importante }}
+    </div>
+    <div class="form-group">
+      <label>Tâches installations</label>
+      {{ form.taches_installations }}
+    </div>
+
+    <div class="grid">
+      <div class="form-group"><label>Équipe dev à ajouter</label>{{ form.equipe_dev_ajouter }}</div>
+      <div class="form-group"><label>Équipe intégration à ajouter</label>{{ form.equipe_integration_ajouter }}</div>
+      <div class="form-group"><label>BI à valider</label>{{ form.bi_a_valider }}</div>
+      <div class="form-group"><label>Autres produits à vérifier (RAD, SYP…)</label>{{ form.autres_produits_verifier }}</div>
+      <div class="form-group"><label>Gestionnaire de projet</label>{{ form.gestionnaire_projet }}</div>
+    </div>
+  </fieldset>
+
+  <button type="submit" class="btn btn-primary">Créer le projet</button>
+</form>
+
+<style>
+  .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 12px; }
+  .form-group { margin-bottom: .75rem; }
+</style>
+{% endblock %}

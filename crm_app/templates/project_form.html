@@ -1,68 +1,275 @@
-{% extends 'base.html' %}
-{% block title %}Nouveau Projet - CRM{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}
+  {% if form.instance.pk %}
+    Modifier le projet : {{ form.instance.project_number }}
+  {% else %}
+    Nouveau Projet
+  {% endif %}
+{% endblock %}
+
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Nouveau Projet</h1>
-<form method="post" class="bg-white rounded-lg shadow p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-  {% csrf_token %}
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Numéro de projet</label>
-    <input name="project_number" class="tw-input" required/>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Client</label>
-    <input name="client_name" class="tw-input" required/>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Environnement</label>
-    <select name="environment" class="tw-input" required>
-      <option value="test">Test</option>
-      <option value="prod">Production</option>
-    </select>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Produit</label>
-    <select name="product" class="tw-input">
-      <option>GRF</option><option>GRM</option><option>GFM</option><option>Clinibase CI</option><option>GRH</option><option>eClinibase</option><option>SIurge</option><option>Sicheld</option><option>Med Echo</option><option>I-CLSC</option><option>RadImage</option>
-    </select>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Type de travaux</label>
-    <select name="work_type" class="tw-input">
-      <option>Migration</option><option>Mise a niveau</option><option>Rehaussement</option><option>Demenagement</option><option>Copie de BD</option><option>Installation poste de Support</option>
-    </select>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Serveur BD</label>
-    <input name="db_server" class="tw-input" required/>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Serveur App</label>
-    <input name="app_server" class="tw-input" required/>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Nom de la BD</label>
-    <input name="database_name" class="tw-input" required/>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Validation FUSE</label>
-    <select name="fuse_validation" class="tw-input"><option>OK</option><option selected>NOK</option></select>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Validation Certificat</label>
-    <select name="certificate_validation" class="tw-input"><option>OK</option><option selected>NOK</option></select>
-  </div>
-  <div>
-    <label class="block text-sm text-gray-600 mb-1">Statut</label>
-    <select name="status" class="tw-input">
-      <option value="pending">En attente</option>
-      <option value="in_progress">En cours</option>
-      <option value="completed">Terminé</option>
-      <option value="on_hold">En pause</option>
-      <option value="cancelled">Annulé</option>
-    </select>
-  </div>
-  <div class="md:col-span-2 flex justify-end">
-    <button class="bg-blue-600 text-white px-4 py-2 rounded-md">Créer</button>
-  </div>
-</form>
+<div class="container my-4">
+  <h1 class="mb-6 text-3xl font-extrabold text-gray-800 tracking-tight">
+    {% if form.instance.pk %}
+      Modifier le Projet
+    {% else %}
+      Créer un Nouveau Projet
+    {% endif %}
+  </h1>
+
+  {% if form.errors %}
+    <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
+      <span class="font-medium">Le formulaire contient des erreurs.</span> Veuillez corriger les champs indiqués ci-dessous.
+      <ul>
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <li><strong>{{ field }}:</strong> {{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" novalidate autocomplete="off">
+    {% csrf_token %}
+    <div id="wizard-form" class="space-y-8">
+
+      <!-- Section principale -->
+      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border">
+        <legend class="text-lg font-semibold text-gray-900 mb-4">Informations principales et Planification</legend>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div>
+            <label for="{{ form.project_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Numéro de projet</label>
+            {{ form.project_number }}
+          </div>
+          <div>
+            <label for="{{ form.client_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom du client</label>
+            {{ form.client_name }}
+          </div>
+          <div>
+            <label for="{{ form.environment.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Environnement</label>
+            {{ form.environment }}
+          </div>
+          <div>
+            <label for="{{ form.product.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Produit</label>
+            {{ form.product }}
+          </div>
+          <div>
+            <label for="{{ form.work_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Type de travaux</label>
+            {{ form.work_type }}
+          </div>
+          <div>
+            <label for="{{ form.assigned_to.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Assigné à</label>
+            {{ form.assigned_to }}
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-6">
+            <!-- Préparation -->
+            <div class="space-y-4 p-4 rounded-lg bg-gray-50 border">
+                <h3 class="font-medium text-gray-700">Préparation</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label for="{{ form.prep_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                      {{ form.prep_date }}
+                    </div>
+                    <div>
+                      <label for="{{ form.prep_start_time.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Début</label>
+                      {{ form.prep_start_time }}
+                    </div>
+                    <div>
+                      <label for="{{ form.prep_end_time.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Fin</label>
+                      {{ form.prep_end_time }}
+                    </div>
+                </div>
+            </div>
+            <!-- Production -->
+            <div class="space-y-4 p-4 rounded-lg bg-gray-50 border">
+                <h3 class="font-medium text-gray-700">Production</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label for="{{ form.prod_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                      {{ form.prod_date }}
+                    </div>
+                    <div>
+                      <label for="{{ form.prod_start_time.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Début</label>
+                      {{ form.prod_start_time }}
+                    </div>
+                    <div>
+                      <label for="{{ form.prod_end_time.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Fin</label>
+                      {{ form.prod_end_time }}
+                    </div>
+                </div>
+            </div>
+        </div>
+      </fieldset>
+
+      <!-- Section technique -->
+      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
+        <legend class="text-lg font-semibold text-gray-900 mb-4">Détails Techniques</legend>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.database_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom de la base de données</label>
+            {{ form.database_name }}
+          </div>
+          <div>
+            <label for="{{ form.db_server.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Serveur de BD</label>
+            {{ form.db_server }}
+          </div>
+          <div>
+            <label for="{{ form.app_server.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Serveur applicatif</label>
+            {{ form.app_server }}
+          </div>
+          <div>
+            <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+            {{ form.status }}
+          </div>
+          <div>
+            <label for="{{ form.version_actuelle.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Version actuelle</label>
+            {{ form.version_actuelle }}
+          </div>
+          <div>
+            <label for="{{ form.version_cible.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Version cible</label>
+            {{ form.version_cible }}
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Section SRE -->
+      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
+        <legend class="text-lg font-semibold text-gray-900 mb-4">Contact SRE</legend>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.sre_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom SRE</label>
+            {{ form.sre_name }}
+          </div>
+          <div>
+            <label for="{{ form.sre_phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Téléphone SRE</label>
+            {{ form.sre_phone }}
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Section Matrice des versions -->
+      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
+        <legend class="text-lg font-semibold text-gray-900 mb-4">Matrice des versions</legend>
+        <div>
+          <label for="{{ form.versions_matrix.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Matrice des versions</label>
+          {{ form.versions_matrix }}
+        </div>
+      </fieldset>
+      
+      <!-- Section Communications -->
+      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
+        <legend class="text-lg font-semibold text-gray-900 mb-4">Communications Client</legend>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.contact_tech_client_to.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Contact technique (À)</label>
+            {{ form.contact_tech_client_to }}
+          </div>
+          <div>
+            <label for="{{ form.contact_tech_client_cc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Contact technique (Cc)</label>
+            {{ form.contact_tech_client_cc }}
+          </div>
+          <div class="md:col-span-2">
+            <label for="{{ form.autres_ressources_client_cc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Autres ressources (Cc)</label>
+            {{ form.autres_ressources_client_cc }}
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Autres détails -->
+      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
+        <legend class="text-lg font-semibold text-gray-900 mb-4">Autres détails</legend>
+        <div class="space-y-6">
+          <div>
+            <label for="{{ form.note_importante.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Note importante</label>
+            {{ form.note_importante }}
+          </div>
+          <div>
+            <label for="{{ form.taches_installations.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tâches d'installations</label>
+            {{ form.taches_installations }}
+          </div>
+          <div>
+            <label for="{{ form.gestionnaire_projet.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Gestionnaire de projet</label>
+            {{ form.gestionnaire_projet }}
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Fichiers -->
+      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
+        <legend class="text-lg font-semibold text-gray-900 mb-4">Fichiers</legend>
+        <div>
+          <label for="{{ form.coordination_board.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tableau de coordination</label>
+          {{ form.coordination_board }}
+        </div>
+      </fieldset>
+
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="mt-8 flex items-center justify-end gap-4">
+      <a href="{% url 'project_list' %}" class="text-sm font-semibold text-gray-600 hover:text-gray-800">Annuler</a>
+      <button type="button" id="back-btn" class="px-6 py-2.5 rounded-full bg-gray-300 text-gray-800 font-semibold shadow-sm hover:bg-gray-400 active:scale-[0.99] transition" style="display: none;">Précédent</button>
+      <button type="button" id="next-btn" class="px-6 py-2.5 rounded-full bg-indigo-500 text-white font-semibold shadow-sm hover:bg-indigo-600 active:scale-[0.99] transition">Suivant</button>
+      <button type="submit" id="submit-btn" class="px-6 py-2.5 rounded-full bg-indigo-600 text-white font-semibold shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition" style="display: none;">
+        {% if form.instance.pk %}
+          Enregistrer les modifications
+        {% else %}
+          Créer le projet
+        {% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const formSections = Array.from(document.querySelectorAll('.form-section'));
+    const backBtn = document.getElementById('back-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    let currentSectionIndex = 0;
+
+    function updateButtons() {
+        if (currentSectionIndex === 0) {
+            backBtn.style.display = 'none';
+        } else {
+            backBtn.style.display = 'inline-block';
+        }
+
+        if (currentSectionIndex === formSections.length - 1) {
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'inline-block';
+        } else {
+            nextBtn.style.display = 'inline-block';
+            submitBtn.style.display = 'none';
+        }
+    }
+
+    function showSection(index) {
+        formSections.forEach((section, i) => {
+            section.style.display = i === index ? 'block' : 'none';
+        });
+        currentSectionIndex = index;
+        updateButtons();
+    }
+
+    nextBtn.addEventListener('click', () => {
+        if (currentSectionIndex < formSections.length - 1) {
+            showSection(currentSectionIndex + 1);
+        }
+    });
+
+    backBtn.addEventListener('click', () => {
+        if (currentSectionIndex > 0) {
+            showSection(currentSectionIndex - 1);
+        }
+    });
+
+    // Initial state
+    showSection(0);
+});
+</script>
 {% endblock %}
