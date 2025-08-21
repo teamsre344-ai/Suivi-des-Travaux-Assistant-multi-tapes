@@ -55,16 +55,12 @@ class CoordinationDeploymentForm(forms.Form):
         widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": "image/png,image/jpeg,image/webp"})
     )
 
-    STATUS_CHOICES_MINI = [
-        ('waiting_on_client', 'En attente du client'),
-        ('waiting_on_internal', 'En attente interne'),
-        ('preparation', 'Préparation'),
-        ('production', 'Production'),
-    ]
-    status = forms.ChoiceField(
-        label="Statut du projet",
-        choices=STATUS_CHOICES_MINI,
-        widget=forms.Select(attrs={"class": "form-select"})
+    client_name = forms.ChoiceField(
+        label="Nom du client",
+        required=True,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        choices=[],
+        help_text="Sélectionnez le nom du client existant"
     )
 
     # Préparation

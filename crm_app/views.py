@@ -55,23 +55,27 @@ def coordination_form_view(request):
 
     if request.method == "POST":
         form = CoordinationDeploymentForm(request.POST, request.FILES)
+        
+        client_choices = [(name, name) for name in Project.objects.values_list('client_name', flat=True).distinct().order_by('client_name') if name]
+        form.fields['client_name'].choices = client_choices
+
         if form.is_valid():
             pn = form.cleaned_data["project_number"].strip()
             tgt_tech = form.cleaned_data["technician"]
             img = form.cleaned_data.get("coordination_board")
-            status = form.cleaned_data["status"]
+            client_name = form.cleaned_data["client_name"]
 
             # Create minimal project; the deployment specialist will complete details later.
             p = Project.objects.create(
                 project_number=pn,
                 environment='test',  # default, can be changed later
-                client_name='',
+                client_name=client_name,
                 product='',
                 work_type='Migration',
                 created_by=request.user,
                 technician=tgt_tech,
                 assigned_to=tgt_tech.user if tgt_tech else None,
-                status=status,
+                status='assigned',
                 title=f"Coordination — {pn}",
             )
 
@@ -93,6 +97,8 @@ def coordination_form_view(request):
             return redirect('project_detail', pk=p.pk)
     else:
         form = CoordinationDeploymentForm()
+        client_choices = [(name, name) for name in Project.objects.values_list('client_name', flat=True).distinct().order_by('client_name') if name]
+        form.fields['client_name'].choices = client_choices
 
     return render(request, "coordination_form.html", {"form": form, "technician": tech})
 

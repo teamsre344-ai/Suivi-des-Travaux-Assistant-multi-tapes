@@ -37,16 +37,17 @@
   <div class="card-body">
     <div class="row g-3">
       
-      <!-- Row 1: Project Number and Status -->
+      <!-- Row 1: Project Number and Client Name -->
       <div class="col-md-6">
         <label class="form-label" for="{{ form.project_number.id_for_label }}">Numéro de projet</label>
         {{ form.project_number }}
       </div>
       
       <div class="col-md-6">
-        <label class="form-label" for="{{ form.status.id_for_label }}">Statut</label>
-        {{ form.status }}
+        <label class="form-label" for="{{ form.client_name.id_for_label }}">Nom du client</label>
+        {{ form.client_name }}
       </div>
+
 
       <!-- Row 2: Deployment Specialist and Project Manager -->
       <div class="col-md-6">

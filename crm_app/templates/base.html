@@ -35,7 +35,7 @@
   </style>
 </head>
 
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
   <!-- HEADER / NAV -->
   <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
     <div class="tw-container px-4">
@@ -127,7 +127,7 @@
   </header>
 
   <!-- MAIN -->
-  <main class="tw-container px-4 py-6">
+  <main class="tw-container px-4 py-6 flex-grow">
     {% if messages %}
       <div class="space-y-2 mb-4">
         {% for m in messages %}
@@ -147,7 +147,7 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="border-t bg-white mt-12">
+  <footer class="border-t bg-white">
     <div class="tw-container px-4 py-4 text-sm text-gray-500 flex items-center justify-between">
       <span>&copy; {{ now|date:"Y" }}LGI Healthcare Solutions | LGI Solutions Santé </span>
       <div class="space-x-3">
