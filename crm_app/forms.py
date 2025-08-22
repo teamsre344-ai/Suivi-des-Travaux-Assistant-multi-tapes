@@ -30,7 +30,7 @@ class LoginForm(forms.Form):
 
 
 # ---------- NEW: Coordination & Déploiement (first step for planners/managers) ----------
-class CoordinationDeploymentForm(forms.Form):
+class CoordinationDeploymentForm(forms.ModelForm):
     project_number = forms.CharField(
         label="Numéro de projet",
         max_length=50,
@@ -60,11 +60,11 @@ class CoordinationDeploymentForm(forms.Form):
         help_text="Sélectionnez le gestionnaire de projet",
     )
 
-    coordination_board = forms.ImageField(
-        label="Le Tableau de Coordination des Travaux (image)",
+    coordination_board = forms.CharField(
+        label="Le Tableau de Coordination des Travaux (copier-coller)",
         required=False,
-        widget=forms.ClearableFileInput(
-            attrs={"class": "form-control", "accept": "image/png,image/jpeg,image/webp"}
+        widget=forms.Textarea(
+            attrs={"class": "form-control", "rows": 10}
         ),
     )
 
@@ -82,6 +82,14 @@ class CoordinationDeploymentForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select"}),
         choices=[],
         help_text="Sélectionnez le produit",
+    )
+
+    work_type = forms.ChoiceField(
+        label="Type de Travaux",
+        choices=Project.WORK_TYPE_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        help_text="Sélectionnez le type de travaux",
     )
 
     # Préparation
@@ -117,6 +125,24 @@ class CoordinationDeploymentForm(forms.Form):
         required=False,
         widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
     )
+
+    class Meta:
+        model = Project
+        fields = [
+            "project_number",
+            "technician",
+            "gestionnaire_projet",
+            "coordination_board",
+            "client_name",
+            "product",
+            "work_type",
+            "prep_date",
+            "prep_start_time",
+            "prep_end_time",
+            "prod_date",
+            "prod_start_time",
+            "prod_end_time",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

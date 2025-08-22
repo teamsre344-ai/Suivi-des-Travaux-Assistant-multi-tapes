@@ -152,10 +152,8 @@ class Project(models.Model):
     )
 
     # ----- Coordination des déploiements -----
-    # Planning board image (uploaded by manager/counsellor)
-    coordination_board = models.ImageField(
-        upload_to=coordination_board_path, blank=True, null=True
-    )
+    # Planning board text (pasted by manager/counsellor)
+    coordination_board = models.TextField(blank=True, default='')
 
     travaux_a_faire = models.CharField(max_length=255, blank=True)
     responsable_travaux = models.CharField(max_length=255, blank=True)

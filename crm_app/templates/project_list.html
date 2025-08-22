@@ -44,8 +44,15 @@
 </div>
 
 <!-- Filter bar -->
-<form method="get" class="bg-white rounded-2xl border shadow-sm p-4 mb-6">
+<form method="get" class="bg-white rounded-2xl border shadow-sm p-4 mb-6 space-y-4">
+  <!-- First row -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+    <!-- Search -->
+    <div class="lg:col-span-4">
+      <input type="text" name="q" value="{{ q }}"
+             placeholder="Chercher (client / no / produit / membre / règles)…"
+             class="w-full h-11 rounded-full border-gray-300 pl-4 pr-4 focus:ring-indigo-200 focus:border-indigo-400" />
+    </div>
     <!-- Status -->
     <div class="lg:col-span-2">
       <select name="status" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
@@ -57,7 +64,6 @@
         <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Annulés</option>
       </select>
     </div>
-
     <!-- Environment -->
     <div class="lg:col-span-2">
       <select name="environment" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
@@ -66,7 +72,6 @@
         <option value="prod" {% if environment == 'prod' %}selected{% endif %}>Production</option>
       </select>
     </div>
-
     <!-- Product -->
     <div class="lg:col-span-2">
       <select name="product" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
@@ -76,45 +81,35 @@
         {% endfor %}
       </select>
     </div>
-
-    <!-- Search -->
-    <div class="lg:col-span-3">
-      <input type="text" name="q" value="{{ q }}"
-             placeholder="Chercher (client / no / produit / membre / règles)…"
-             class="w-full h-11 rounded-full border-gray-300 pl-4 pr-4 focus:ring-indigo-200 focus:border-indigo-400" />
+    <!-- Per page -->
+    <div class="lg:col-span-2">
+      <label for="per_page" class="text-xs text-gray-500 ml-1">Par page</label>
+      <select id="per_page" name="per_page" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
+        {% for n in per_page_choices %}
+          <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}/page</option>
+        {% endfor %}
+      </select>
     </div>
+  </div>
 
-    <!-- Created by me / assigned to me -->
-    <div class="lg:col-span-3 flex items-center gap-4">
-      <label class="inline-flex items-center gap-2">
-        <input type="checkbox" name="created_by_me" {% if created_by_me %}checked{% endif %}
-               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-        <span class="text-sm">Créés par moi</span>
-      </label>
-      <label class="inline-flex items-center gap-2">
-        <input type="checkbox" name="assigned_to_me" {% if assigned_to_me %}checked{% endif %}
-               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-        <span class="text-sm">Assignés à moi</span>
-      </label>
-    </div>
-
+  <!-- Second row -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
     <!-- Date from -->
     <div class="lg:col-span-2">
-      <input type="date" name="date_from" value="{{ date_from }}"
+      <label for="date_from" class="text-xs text-gray-500 ml-1">Du</label>
+      <input id="date_from" type="date" name="date_from" value="{{ date_from }}"
              class="w-full h-11 rounded-xl border-gray-300 px-3 focus:ring-indigo-200 focus:border-indigo-400" />
-      <div class="text-[11px] text-gray-400 mt-0.5">Du</div>
     </div>
-
     <!-- Date to -->
     <div class="lg:col-span-2">
-      <input type="date" name="date_to" value="{{ date_to }}"
+      <label for="date_to" class="text-xs text-gray-500 ml-1">Au</label>
+      <input id="date_to" type="date" name="date_to" value="{{ date_to }}"
              class="w-full h-11 rounded-xl border-gray-300 px-3 focus:ring-indigo-200 focus:border-indigo-400" />
-      <div class="text-[11px] text-gray-400 mt-0.5">Au</div>
     </div>
-
     <!-- Sort -->
     <div class="lg:col-span-2">
-      <select name="sort" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
+      <label for="sort" class="text-xs text-gray-500 ml-1">Trier par</label>
+      <select id="sort" name="sort" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
         <option value="created_desc" {% if sort == 'created_desc' %}selected{% endif %}>Plus récents</option>
         <option value="created_asc" {% if sort == 'created_asc' %}selected{% endif %}>Plus anciens</option>
         <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>Date projet ↓</option>
@@ -126,27 +121,27 @@
         <option value="status" {% if sort == 'status' %}selected{% endif %}>Statut</option>
       </select>
     </div>
-
-    <!-- Per page -->
-<div class="lg:col-span-1">
-  <select name="per_page" class="w-full h-11 rounded-xl border-gray-300 focus:ring-indigo-200 focus:border-indigo-400">
-    {% for n in per_page_choices %}
-      <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}/page</option>
-    {% endfor %}
-  </select>
-</div>
-
-
+    <!-- Checkboxes -->
+    <div class="lg:col-span-3 flex items-center gap-4 self-end pb-2">
+      <label class="inline-flex items-center gap-2">
+        <input type="checkbox" name="created_by_me" {% if created_by_me %}checked{% endif %}
+               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+        <span class="text-sm">Créés par moi</span>
+      </label>
+      <label class="inline-flex items-center gap-2">
+        <input type="checkbox" name="assigned_to_me" {% if assigned_to_me %}checked{% endif %}
+               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+        <span class="text-sm">Assignés à moi</span>
+      </label>
+    </div>
     <!-- Buttons -->
-    <div class="lg:col-span-3 flex items-center gap-3">
+    <div class="lg:col-span-3 flex items-center gap-3 self-end justify-end pb-1">
       <button class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 text-white px-4 h-11 shadow-sm hover:bg-indigo-700">
         <i class="fa-solid fa-filter"></i> Filtrer
       </button>
       <a href="{% url 'project_list' %}" class="text-sm text-gray-500 hover:text-gray-700">Réinitialiser</a>
-
-      {# Export keeps current filters; we add export=1 #}
       <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}export=1"
-         class="ml-auto inline-flex items-center gap-2 rounded-xl border px-3 h-11 hover:bg-gray-50">
+         class="inline-flex items-center gap-2 rounded-xl border px-3 h-11 hover:bg-gray-50">
         <i class="fa-solid fa-file-csv"></i> Export CSV
       </a>
     </div>
@@ -216,7 +211,10 @@
             {{ p.created_at|date:"d/m/Y H:i" }}
           </td>
           <td class="px-4 py-2 text-right">
-            <a href="{% url 'project_detail' p.pk %}" class="text-indigo-600 hover:underline text-sm">Ouvrir</a>
+            <div class="flex justify-end gap-2">
+              <a href="{% url 'project_detail' p.pk %}" class="inline-block px-3 py-1 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Ouvrir</a>
+              <a href="{% url 'project_duplicate' pk=p.pk %}" class="inline-block px-3 py-1 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Dupliquer</a>
+            </div>
           </td>
         </tr>
         {% empty %}

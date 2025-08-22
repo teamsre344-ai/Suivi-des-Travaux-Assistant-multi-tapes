@@ -34,13 +34,41 @@
     </div>
   {% endif %}
 
+  <style>
+    .menu-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        padding: 12px 24px;
+        border-bottom: 4px solid transparent;
+        color: #6b7280; /* gray-500 */
+        font-weight: 500;
+    }
+    .menu-item.active {
+        color: #4f46e5; /* indigo-600 */
+        border-bottom-color: #4f46e5; /* indigo-600 */
+        font-weight: 600;
+    }
+    .form-section {
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+    }
+  </style>
+
+  <div class="mb-6 border-b border-gray-200">
+      <div id="form-menu" class="flex justify-center -mb-px">
+          <div class="menu-item active" data-section="0">Informations principales et Planification</div>
+          <div class="menu-item" data-section="1">Détails Techniques</div>
+          {% if form.instance.pk %}
+          <div class="menu-item" data-section="2">Détails du projet</div>
+          {% endif %}
+      </div>
+  </div>
+
   <form method="post" enctype="multipart/form-data" novalidate autocomplete="off">
     {% csrf_token %}
-    <div id="wizard-form" class="space-y-8">
+    <div id="wizard-form">
 
       <!-- Section principale -->
       <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full">
-        <div class="text-lg font-semibold text-gray-900 mb-4">Informations principales et Planification</div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
             <label for="{{ form.project_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Numéro de projet</label>
@@ -109,7 +137,6 @@
 
       <!-- Section technique -->
       <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
-        <div class="text-lg font-semibold text-gray-900 mb-4">Détails Techniques</div>
         <div class="flex flex-wrap -mx-3">
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.database_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom de la base de données</label>
@@ -124,16 +151,16 @@
             {{ form.app_server }}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
-            <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-            {{ form.status }}
-          </div>
-          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.version_actuelle.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Version actuelle</label>
             {{ form.version_actuelle }}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.version_cible.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Version cible</label>
             {{ form.version_cible }}
+          </div>
+          <div class="w-full px-3 mb-6">
+            <label for="{{ form.versions_matrix.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Matrice des versions</label>
+            {{ form.versions_matrix }}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.fuse_validation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Validation Fuse</label>
@@ -143,112 +170,15 @@
             <label for="{{ form.certificate_validation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Validation Certificat</label>
             {{ form.certificate_validation }}
           </div>
-          <div class="w-full md:w-1/2 px-3 mb-6">
-            <label for="{{ form.tables_m34.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tables M34</label>
-            {{ form.tables_m34 }}
-          </div>
-          <div class="w-full md:w-1/2 px-3 mb-6">
-            <label for="{{ form.travaux_a_faire.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Travaux à faire</label>
-            {{ form.travaux_a_faire }}
-          </div>
-          <div class="w-full md:w-1/2 px-3 mb-6">
-            <label for="{{ form.responsable_travaux.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Responsable des travaux</label>
-            {{ form.responsable_travaux }}
-          </div>
         </div>
       </div>
 
-      <!-- Section SRE -->
+      <!-- Section détails du projet -->
+      {% if form.instance.pk %}
       <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
-        <div class="text-lg font-semibold text-gray-900 mb-4">Contact SRE</div>
-        <div class="flex flex-wrap -mx-3">
-          <div class="w-full md:w-1/2 px-3 mb-6">
-            <label for="{{ form.sre_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom SRE</label>
-            {{ form.sre_name }}
-          </div>
-          <div class="w-full md:w-1/2 px-3 mb-6">
-            <label for="{{ form.sre_phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Téléphone SRE</label>
-            {{ form.sre_phone }}
-          </div>
-        </div>
+        {% include "_project_detail_content.html" %}
       </div>
-
-      <!-- Section Matrice des versions -->
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
-        <div class="text-lg font-semibold text-gray-900 mb-4">Matrice des versions</div>
-        <div>
-          <label for="{{ form.versions_matrix.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Matrice des versions</label>
-          {{ form.versions_matrix }}
-        </div>
-      </div>
-      
-      <!-- Section Communications -->
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
-        <div class="text-lg font-semibold text-gray-900 mb-4">Communications Client</div>
-        <div class="flex flex-wrap -mx-3">
-          <div class="w-full md:w-1/2 px-3 mb-6">
-            <label for="{{ form.contact_tech_client_to.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Contact technique (À)</label>
-            {{ form.contact_tech_client_to }}
-          </div>
-          <div class="w-full md:w-1/2 px-3 mb-6">
-            <label for="{{ form.contact_tech_client_cc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Contact technique (Cc)</label>
-            {{ form.contact_tech_client_cc }}
-          </div>
-          <div class="w-full px-3 mb-6">
-            <label for="{{ form.autres_ressources_client_cc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Autres ressources (Cc)</label>
-            {{ form.autres_ressources_client_cc }}
-          </div>
-          <div class="w-full px-3 mb-6">
-            <label for="{{ form.courriel_confirmation_client.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Courriel confirmation client</label>
-            {{ form.courriel_confirmation_client }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Autres détails -->
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
-        <div class="text-lg font-semibold text-gray-900 mb-4">Autres détails</div>
-        <div class="space-y-6">
-          <div>
-            <label for="{{ form.note_importante.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Note importante</label>
-            {{ form.note_importante }}
-          </div>
-          <div>
-            <label for="{{ form.taches_installations.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tâches d'installations</label>
-            {{ form.taches_installations }}
-          </div>
-          <div>
-            <label for="{{ form.gestionnaire_projet.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Gestionnaire de projet</label>
-            {{ form.gestionnaire_projet }}
-          </div>
-          <div>
-            <label for="{{ form.equipe_dev_ajouter.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Équipe dev à ajouter</label>
-            {{ form.equipe_dev_ajouter }}
-          </div>
-          <div>
-            <label for="{{ form.equipe_integration_ajouter.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Équipe intégration à ajouter</label>
-            {{ form.equipe_integration_ajouter }}
-          </div>
-          <div>
-            <label for="{{ form.bi_a_valider.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">BI à valider</label>
-            {{ form.bi_a_valider }}
-          </div>
-          <div>
-            <label for="{{ form.autres_produits_verifier.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Autres produits à vérifier</label>
-            {{ form.autres_produits_verifier }}
-          </div>
-        </div>
-      </div>
-      
-      <!-- Fichiers -->
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
-        <div class="text-lg font-semibold text-gray-900 mb-4">Fichiers</div>
-        <div>
-          <label for="{{ form.coordination_board.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tableau de coordination</label>
-          {{ form.coordination_board }}
-        </div>
-      </div>
-
+      {% endif %}
     </div>
 
     <!-- Boutons d'action -->
@@ -269,37 +199,91 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const formSections = Array.from(document.querySelectorAll('.form-section'));
+    const menuItems = Array.from(document.querySelectorAll('.menu-item'));
     const backBtn = document.getElementById('back-btn');
     const nextBtn = document.getElementById('next-btn');
     const submitBtn = document.getElementById('submit-btn');
+    const form = document.querySelector('form');
     let currentSectionIndex = 0;
+    let project_pk = '{{ form.instance.pk|default:"" }}';
+
+    async function saveSectionData() {
+        const formData = new FormData(form);
+        const url = project_pk ? `/projects/${project_pk}/save_section/` : '/projects/save_section/';
+        
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.pk) {
+                    project_pk = data.pk;
+                }
+                return true;
+            } else {
+                // Handle and display errors
+                console.error('Validation errors:', data.errors);
+                // You can add code here to display errors to the user
+                alert('There was an error saving the form. Please check the console for details.');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error saving section data:', error);
+            alert('An unexpected error occurred. Please try again.');
+            return false;
+        }
+    }
 
     function updateButtons() {
-        if (currentSectionIndex === 0) {
-            backBtn.style.display = 'none';
-        } else {
-            backBtn.style.display = 'inline-block';
-        }
-
-        if (currentSectionIndex === formSections.length - 1) {
-            nextBtn.style.display = 'none';
-            submitBtn.style.display = 'inline-block';
-        } else {
-            nextBtn.style.display = 'inline-block';
-            submitBtn.style.display = 'none';
-        }
+        backBtn.style.display = currentSectionIndex === 0 ? 'none' : 'inline-block';
+        const isLastSection = currentSectionIndex === formSections.length - 1;
+        nextBtn.style.display = isLastSection ? 'none' : 'inline-block';
+        submitBtn.style.display = isLastSection ? 'inline-block' : 'none';
     }
 
     function showSection(index) {
         formSections.forEach((section, i) => {
-            section.style.display = i === index ? 'block' : 'none';
+            const sectionElement = section;
+            if (i === index) {
+                sectionElement.style.display = 'block';
+                sectionElement.style.opacity = '1';
+                sectionElement.style.transform = 'translateX(0)';
+            } else {
+                sectionElement.style.display = 'none';
+                sectionElement.style.opacity = '0';
+                sectionElement.style.transform = 'translateX(20px)';
+            }
         });
+
+        menuItems.forEach((item, i) => {
+            if (i === index) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+
         currentSectionIndex = index;
         updateButtons();
     }
 
-    nextBtn.addEventListener('click', () => {
-        if (currentSectionIndex < formSections.length - 1) {
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const sectionIndex = parseInt(item.getAttribute('data-section'));
+            showSection(sectionIndex);
+        });
+    });
+
+    nextBtn.addEventListener('click', async () => {
+        const saved = await saveSectionData();
+        if (saved && currentSectionIndex < formSections.length - 1) {
             showSection(currentSectionIndex + 1);
         }
     });

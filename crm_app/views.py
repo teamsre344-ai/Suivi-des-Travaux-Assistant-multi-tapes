@@ -16,11 +16,13 @@ from django.http import (
     HttpResponseBadRequest,
     JsonResponse,
 )
+from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.utils.text import slugify
 
 from .forms import (
     LoginForm,
@@ -45,21 +47,22 @@ User = get_user_model()
 
 
 @login_required
-def coordination_form_view(request):
+def coordination_form_view(request, pk=None):
     """
-    Standalone route for the first-step 'Coordination & Déploiement' page.
+    Standalone route for the 'Coordination & Déploiement' page.
+    Can create a new project or edit an existing one if pk is provided.
     Only managers / planification counselors can access it.
     """
     tech = _sync_user_and_technician_from_directory(request.user)
-    # Only allow managers or planification counselors
     if not _is_planner_or_manager_from_tech(tech):
-        # You can use PermissionDenied to show 403, or redirect to the normal create page.
-        # raise PermissionDenied("Accès réservé à la planification / gestion.")
         return redirect("project_create")
 
-    if request.method == "POST":
-        form = CoordinationDeploymentForm(request.POST, request.FILES)
+    project = None
+    if pk:
+        project = get_object_or_404(Project, pk=pk)
 
+    if request.method == "POST":
+        form = CoordinationDeploymentForm(request.POST, request.FILES, instance=project)
         client_choices = [
             (name, name)
             for name in Project.objects.values_list("client_name", flat=True)
@@ -70,43 +73,23 @@ def coordination_form_view(request):
         form.fields["client_name"].choices = client_choices
 
         if form.is_valid():
-            pn = form.cleaned_data["project_number"].strip()
-            tgt_tech = form.cleaned_data["technician"]
-            img = form.cleaned_data.get("coordination_board")
-            client_name = form.cleaned_data["client_name"]
+            p = form.save(commit=False)
+            if not p.pk:
+                p.created_by = request.user
+                p.status = "assigned"
+                p.title = f"Coordination — {form.cleaned_data['project_number'].strip()}"
 
-            # Create minimal project; the deployment specialist will complete details later.
-            p = Project.objects.create(
-                project_number=pn,
-                environment="test",  # default, can be changed later
-                client_name=client_name,
-                product="",
-                work_type="Migration",
-                created_by=request.user,
-                technician=tgt_tech,
-                assigned_to=tgt_tech.user if tgt_tech else None,
-                status="assigned",
-                title=f"Coordination — {pn}",
-            )
+            p.technician = form.cleaned_data["technician"]
+            p.assigned_to = p.technician.user if p.technician else None
+            
+            if form.cleaned_data.get("coordination_board"):
+                p.coordination_board = form.cleaned_data.get("coordination_board")
 
-            # Save the selected project manager's name
-            p.gestionnaire_projet = form.cleaned_data.get("gestionnaire_projet", "")
-
-            # Planning windows + uploaded board
-            p.prep_date = form.cleaned_data.get("prep_date")
-            p.prep_start_time = form.cleaned_data.get("prep_start_time")
-            p.prep_end_time = form.cleaned_data.get("prep_end_time")
-            p.prod_date = form.cleaned_data.get("prod_date")
-            p.prod_start_time = form.cleaned_data.get("prod_start_time")
-            p.prod_end_time = form.cleaned_data.get("prod_end_time")
-            if img:
-                p.coordination_board = img
             p.save()
-
-            messages.success(request, "Projet créé et assigné au technicien.")
+            messages.success(request, f"Projet {'mis à jour' if pk else 'créé'} et assigné.")
             return redirect("project_detail", pk=p.pk)
     else:
-        form = CoordinationDeploymentForm()
+        form = CoordinationDeploymentForm(instance=project)
         client_choices = [
             (name, name)
             for name in Project.objects.values_list("client_name", flat=True)
@@ -116,7 +99,11 @@ def coordination_form_view(request):
         ]
         form.fields["client_name"].choices = client_choices
 
-    return render(request, "coordination_form.html", {"form": form, "technician": tech})
+    return render(
+        request,
+        "coordination_form.html",
+        {"form": form, "technician": tech, "project": project},
+    )
 
 
 @login_required
@@ -474,6 +461,21 @@ def home_view(request):
         round(avg_lead_td.total_seconds() / 86400, 1) if avg_lead_td else 0.0
     )
 
+    # New metric: Avg completion days (from start_at to updated_at) for projects completed in the last 90 days
+    completion_dur_expr = ExpressionWrapper(
+        F("updated_at") - F("start_at"), output_field=DurationField()
+    )
+    avg_completion_td = (
+        last90_completed_qs.filter(start_at__isnull=False)
+        .annotate(dur=completion_dur_expr)
+        .aggregate(avg=Avg("dur"))["avg"]
+    ) or timedelta(0)
+    avg_completion_days_90 = (
+        round(avg_completion_td.total_seconds() / 86400, 1)
+        if avg_completion_td
+        else 0.0
+    )
+
     last_12m = now - timedelta(days=365)
     wt_qs = (
         projects.filter(created_at__gte=last_12m)
@@ -506,6 +508,7 @@ def home_view(request):
         "last30_completed": last30_completed,
         "on_time_rate_90": on_time_rate_90,
         "avg_lead_days_90": avg_lead_days_90,
+        "avg_completion_days_90": avg_completion_days_90,
         "worktype_labels": worktype_labels,
         "worktype_values": worktype_values,
     }
@@ -855,9 +858,10 @@ def search_view(request):
 @login_required
 def project_update_view(request, pk):
     project = get_object_or_404(Project, pk=pk)
+    form = ProjectForm(instance=project)
     # The new form handles everything client-side, so we just render the page.
     # We can pass project data to the template if the wizard needs to be pre-filled.
-    return render(request, "project_form.html", {"project": project})
+    return render(request, "project_form.html", {"project": project, "form": form})
 
 
 # ------------------ Create (role-based flow) ------------------
@@ -867,6 +871,28 @@ def _is_planner_or_manager(user) -> bool:
     tech = _sync_user_and_technician_from_directory(user)
     role = (getattr(tech, "role", "") or "").lower()
     return bool(getattr(tech, "is_manager", False) or "planification" in role)
+
+
+@require_POST
+@login_required
+def project_form_save_section(request, pk=None):
+    if pk:
+        project = get_object_or_404(Project, pk=pk)
+    else:
+        project = None
+
+    form = ProjectForm(request.POST, instance=project)
+
+    if form.is_valid():
+        project = form.save(commit=False)
+        if not project.pk:
+            project.created_by = request.user
+            tech = _sync_user_and_technician_from_directory(request.user)
+            project.technician = tech
+        project.save()
+        return JsonResponse({'success': True, 'pk': project.pk})
+    else:
+        return JsonResponse({'success': False, 'errors': form.errors})
 
 
 @login_required
@@ -883,8 +909,11 @@ def project_create_view(request, pk=None):
         project = None
 
     # Role-based redirection
-    if _is_planner_or_manager_from_tech(tech) and not project:
-        return redirect("coordination_form")
+    if _is_planner_or_manager_from_tech(tech):
+        if project:
+            return redirect("coordination_form_edit", pk=project.pk)
+        else:
+            return redirect("coordination_form")
 
     if request.method == "POST":
         form = ProjectForm(request.POST, request.FILES, instance=project)
@@ -901,7 +930,9 @@ def project_create_view(request, pk=None):
     else:
         form = ProjectForm(instance=project)
 
-    return render(request, "project_form.html", {"form": form, "technician": tech})
+    return render(
+        request, "project_form.html", {"form": form, "technician": tech, "project": project}
+    )
 
 
 # ------------------ Detail ------------------
@@ -1242,3 +1273,67 @@ def profile_view(request):
         "product_counts": product_counts,
     }
     return render(request, "profile.html", context)
+
+
+@login_required
+def duplicate_project_view(request, pk):
+    """
+    Duplicates a project.
+    """
+    project_to_duplicate = get_object_or_404(Project, pk=pk)
+    
+    # Create a new project instance with duplicated data
+    new_project = Project()
+    for field in project_to_duplicate._meta.fields:
+        if field.name not in ['id', 'pk', 'project_number']:
+            setattr(new_project, field.name, getattr(project_to_duplicate, field.name))
+    
+    new_project.title = f"Copy of {project_to_duplicate.title}"
+    new_project.project_number = f"{project_to_duplicate.project_number}-COPY-{slugify(timezone.now())}"
+    new_project.status = 'pending'  # or any default status
+    new_project.created_by = request.user
+    new_project.save()
+    
+    messages.success(request, f"Project '{project_to_duplicate.title}' has been duplicated.")
+    return redirect('project_detail', pk=new_project.pk)
+
+
+@login_required
+def import_projects_view(request):
+    if request.method == 'POST':
+        import_file = request.FILES.get('import_file')
+        if not import_file:
+            messages.error(request, "Please select a file to upload.")
+            return redirect('import_projects')
+
+        file_content = import_file.read().decode('utf-8')
+        
+        try:
+            if import_file.name.endswith('.json'):
+                projects_data = json.loads(file_content)
+            elif import_file.name.endswith('.csv'):
+                # Basic CSV parsing, assuming header row
+                lines = file_content.strip().split('\n')
+                header = [h.strip() for h in lines[0].split(',')]
+                projects_data = []
+                for line in lines[1:]:
+                    values = [v.strip() for v in line.split(',')]
+                    projects_data.append(dict(zip(header, values)))
+            else:
+                messages.error(request, "Unsupported file format. Please upload a JSON or CSV file.")
+                return redirect('import_projects')
+
+            for project_data in projects_data:
+                Project.objects.create(
+                    created_by=request.user,
+                    **project_data
+                )
+            
+            messages.success(request, f"{len(projects_data)} projects have been imported successfully.")
+            return redirect('project_list')
+
+        except Exception as e:
+            messages.error(request, f"An error occurred during import: {e}")
+            return redirect('import_projects')
+
+    return render(request, 'import_projects.html')

@@ -78,11 +78,17 @@
         {% endif %}
       </div>
 
+      <div class="col-md-6">
+        <label class="form-label" for="{{ form.work_type.id_for_label }}">Type de travaux</label>
+        {{ form.work_type }}
+        {% if form.work_type.help_text %}
+          <div class="form-text">{{ form.work_type.help_text }}</div>
+        {% endif %}
+      </div>
+
     </div>
   </div>
 </fieldset>
-
-    <!-- Editable paste-table section -->
 
     <fieldset class="card mb-4">
       <div class="card-header"><strong>Délais de livraison</strong></div>
@@ -138,18 +144,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </fieldset>
-
-
-    <fieldset class="card mb-4">
-      <div class="card-header"><strong>Tableau de coordination (copier-coller)</strong></div>
-      <div class="card-body">
-        <label class="form-label">Collez ici un tableau (depuis OneNote, Word, Excel…)</label>
-        <div contenteditable="true" class="form-control" style="min-height:200px; white-space:pre-wrap; overflow:auto;">
-          <!-- Vous pouvez coller votre tableau ici -->
-        </div>
-        <div class="form-text"></div>
       </div>
     </fieldset>
 
