@@ -95,7 +95,7 @@ class Project(models.Model):
 
     # ----- Informations de base -----
     title = models.CharField(max_length=200, blank=True)  # auto-filled on create
-    project_number = models.CharField(max_length=50, unique=True, blank=True)
+    project_number = models.CharField(max_length=50, unique=True, blank=True, null=True)
     environment = models.CharField(
         max_length=10, choices=ENVIRONMENT_CHOICES, default="test"
     )

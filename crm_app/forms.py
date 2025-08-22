@@ -260,7 +260,7 @@ class ProjectForm(forms.ModelForm):
             "autres_ressources_client_cc": forms.Textarea(attrs={"rows": 2}),
             "versions_matrix": forms.Textarea(
                 attrs={
-                    "rows": 12,
+                    "rows": 4,
                     "class": "form-control shadow-sm",
                     "placeholder": "Collez ici le tableau des versions (Markdown / CSV / texte).",
                 }

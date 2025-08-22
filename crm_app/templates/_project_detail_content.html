@@ -18,8 +18,8 @@
 
       <!-- Préparation -->
       <div class="col-md-6">
-        <div class="border rounded p-3 h-100">
-          <div class="fw-semibold mb-1">Préparation</div>
+        <div class="border rounded p-3 h-100 bg-blue-50 border-blue-200">
+          <div class="fw-bold text-blue-800 mb-1">Préparation</div>
           <div class="text-muted small mb-2">{{ project.get_preparation_phase_display|default:"Non démarrée" }}</div>
           <div class="d-flex gap-2">
             <form method="post" action="{% url 'project_phase_update' project.id %}">
@@ -44,8 +44,8 @@
 
       <!-- Production -->
       <div class="col-md-6">
-        <div class="border rounded p-3 h-100">
-          <div class="fw-semibold mb-1">Production</div>
+        <div class="border rounded p-3 h-100 bg-green-50 border-green-200">
+          <div class="fw-bold text-green-800 mb-1">Production</div>
           <div class="text-muted small mb-2">{{ project.get_production_phase_display|default:"Non démarrée" }}</div>
           <div class="d-flex gap-2">
             <form method="post" action="{% url 'project_phase_update' project.id %}">
