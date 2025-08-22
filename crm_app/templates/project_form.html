@@ -57,9 +57,7 @@
       <div id="form-menu" class="flex justify-center -mb-px">
           <div class="menu-item active" data-section="0">Informations principales et Planification</div>
           <div class="menu-item" data-section="1">Détails Techniques</div>
-          {% if form.instance.pk %}
-          <div class="menu-item" data-section="2">Détails du projet</div>
-          {% endif %}
+          <div class="menu-item" data-section="2" style="display: {% if form.instance.pk %}block{% else %}none{% endif %};">Détails du projet</div>
       </div>
   </div>
 
@@ -208,7 +206,13 @@ document.addEventListener('DOMContentLoaded', function () {
     let project_pk = '{{ form.instance.pk|default:"" }}';
 
     async function saveSectionData() {
-        const formData = new FormData(form);
+        const formData = new FormData();
+        const currentSection = formSections[currentSectionIndex];
+        const inputs = currentSection.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            formData.append(input.name, input.value);
+        });
+
         const url = project_pk ? `/projects/${project_pk}/save_section/` : '/projects/save_section/';
         
         try {
@@ -223,8 +227,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
 
             if (data.success) {
-                if (data.pk) {
+                if (data.pk && !project_pk) {
                     project_pk = data.pk;
+                    // A new project was created, so we might need to update the URL
+                    // without a full page reload to make the next "save" operation work.
+                    // We also need to un-hide the "Détails du projet" tab.
+                    const detailsTab = document.querySelector('.menu-item[data-section="2"]');
+                    if (detailsTab) {
+                        detailsTab.style.display = 'block';
+                    }
                 }
                 return true;
             } else {

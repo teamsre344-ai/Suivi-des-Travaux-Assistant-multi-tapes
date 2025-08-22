@@ -276,6 +276,14 @@ class ProjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Allow empty fields
+        self.fields['fuse_validation'].required = False
+        self.fields['certificate_validation'].required = False
+        self.fields['status'].required = False
+        self.fields['project_number'].required = False
+        self.fields['environment'].required = False
+        self.fields['work_type'].required = False
+
         # Get client names from the database
         client_names = (
             Project.objects.values_list("client_name", flat=True)
@@ -285,6 +293,7 @@ class ProjectForm(forms.ModelForm):
         self.fields["client_name"] = forms.ChoiceField(
             choices=[("", "---------")] + [(name, name) for name in client_names],
             widget=forms.Select(attrs={"class": "form-select"}),
+            required=False,
         )
 
         # Get product names from the database
@@ -296,6 +305,7 @@ class ProjectForm(forms.ModelForm):
         self.fields["product"] = forms.ChoiceField(
             choices=[("", "---------")] + [(name, name) for name in product_names],
             widget=forms.Select(attrs={"class": "form-select"}),
+            required=False,
         )
 
         # Apply Tailwind CSS classes consistently

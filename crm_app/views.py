@@ -866,23 +866,31 @@ def _is_planner_or_manager(user) -> bool:
 @require_POST
 @login_required
 def project_form_save_section(request, pk=None):
-    if pk:
-        project = get_object_or_404(Project, pk=pk)
-    else:
+    try:
         project = None
+        if pk:
+            project = Project.objects.get(pk=pk)
 
-    form = ProjectForm(request.POST, request.FILES, instance=project)
+        form = ProjectForm(request.POST, request.FILES, instance=project)
 
-    if form.is_valid():
-        project = form.save(commit=False)
-        if not project.pk:
-            project.created_by = request.user
-            tech = _sync_user_and_technician_from_directory(request.user)
-            project.technician = tech
-        project.save()
-        return JsonResponse({'success': True, 'pk': project.pk})
-    else:
-        return JsonResponse({'success': False, 'errors': form.errors})
+        if form.is_valid():
+            project = form.save(commit=False)
+            if not project.pk:
+                project.created_by = request.user
+                tech = _sync_user_and_technician_from_directory(request.user)
+                project.technician = tech
+            project.save()
+            return JsonResponse({"success": True, "pk": project.pk})
+        else:
+            return JsonResponse({"success": False, "errors": form.errors})
+    except Project.DoesNotExist:
+        return JsonResponse(
+            {"success": False, "error": "Project not found."}, status=404
+        )
+    except Exception:
+        return JsonResponse(
+            {"success": False, "error": "An unexpected error occurred."}, status=500
+        )
 
 
 @login_required
