@@ -522,23 +522,64 @@ def analytics_view(request):
     now = timezone.now()
     last_12m = now - timedelta(days=365)
 
-    # Chart 1: Work Type Distribution (existing)
+    # Data for top section
+    total_projects = projects.count()
+    in_progress_projects_count = projects.filter(status="in_progress").count()
+    completed_projects_count = projects.filter(status="completed").count()
+    cancelled_projects_count = projects.filter(status="cancelled").count()
+
+    today = now.date()
+    week_start = today - timedelta(days=today.weekday())
+    prev_week_start = week_start - timedelta(days=7)
+    prev_week_end = week_start
+
+    new_this_week = projects.filter(created_at__date__gte=week_start).count()
+    new_prev_week = projects.filter(
+        created_at__date__gte=prev_week_start, created_at__date__lt=prev_week_end
+    ).count()
+
+    def _pct_change(current: int, prev: int) -> float:
+        if prev == 0:
+            return 100.0 if current > 0 else 0.0
+        return round((current - prev) * 100.0 / prev, 1)
+
+    total_trend_pct = _pct_change(new_this_week, new_prev_week)
+
+    pending_new_today = projects.filter(
+        status="pending", created_at__date=today
+    ).count()
+    
+    overdue_in_progress = projects.filter(
+        status="in_progress", updated_at__lt=now - timedelta(days=7)
+    ).count()
+    
+    completed_this_week = projects.filter(
+        status="completed", updated_at__date__gte=week_start
+    ).count()
+    
+    # Chart 1: Work Type Distribution
     wt_qs = (
         projects.filter(created_at__gte=last_12m)
         .values("work_type")
         .annotate(c=Count("id"))
         .order_by("-c")
     )
-    worktype_labels = [r["work_type"] or "Non défini" for r in wt_qs]
-    worktype_values = [r["c"] for r in wt_qs]
+    total_worktype_projects = sum(item['c'] for item in wt_qs)
+    worktype_data = []
+    for r in wt_qs:
+        label = r["work_type"] or "Non défini"
+        value = r["c"]
+        percentage = round((value / total_worktype_projects) * 100, 1) if total_worktype_projects > 0 else 0
+        worktype_data.append({"label": label, "value": value, "percentage": percentage})
 
-    # Chart 2: On-time vs. Overdue
-    completed_projects = projects.filter(status="completed", date__isnull=False)
-    on_time_count = completed_projects.annotate(
+    # Chart 2: On-time vs. Overdue vs. Cancelled
+    completed_projects_qs = projects.filter(status__in=["completed", "cancelled"], date__isnull=False)
+    on_time_count = completed_projects_qs.filter(status="completed").annotate(
         done_date=TruncDate("updated_at")
     ).filter(done_date__lte=F("date")).count()
-    overdue_count = completed_projects.count() - on_time_count
-    
+    overdue_count = completed_projects_qs.filter(status="completed").count() - on_time_count
+    cancelled_count = completed_projects_qs.filter(status="cancelled").count()
+
     # Chart 3: Top 10 Clients
     client_qs = (
         projects.values("client_name")
@@ -555,20 +596,45 @@ def analytics_view(request):
         "in_progress": "En cours",
         "completed": "Terminé",
         "on_hold": "En pause",
+        "cancelled": "Annulé",
     }
     status_labels = [status_map.get(r["status"], r["status"]) for r in status_qs]
     status_values = [r["c"] for r in status_qs]
 
+    # Chart 5: Project Specialist Workflow
+    specialist_qs = (
+        projects.filter(technician__role__icontains="Spécialiste déploiement")
+        .values("technician__user__first_name", "technician__user__last_name")
+        .annotate(c=Count("id"))
+        .order_by("-c")
+    )
+    specialist_labels = [
+        f"{r['technician__user__first_name']} {r['technician__user__last_name']}"
+        for r in specialist_qs
+    ]
+    specialist_values = [r["c"] for r in specialist_qs]
+
     context = {
         "technician": tech,
-        "worktype_labels": worktype_labels,
-        "worktype_values": worktype_values,
+        "total_projects": total_projects,
+        "cancelled_projects": cancelled_projects_count,
+        "in_progress_projects": in_progress_projects_count,
+        "completed_projects": completed_projects_count,
+        "new_this_week": new_this_week,
+        "total_trend_pct": total_trend_pct,
+        "pending_new_today": pending_new_today,
+        "overdue_in_progress": overdue_in_progress,
+        "completed_this_week": completed_this_week,
+        "worktype_data": worktype_data,
         "on_time_count": on_time_count,
         "overdue_count": overdue_count,
+        "cancelled_count": cancelled_count,
         "client_labels": client_labels,
         "client_values": client_values,
         "status_labels": status_labels,
         "status_values": status_values,
+        "specialist_labels": specialist_labels,
+        "specialist_values": specialist_values,
     }
     return render(request, "analytics.html", context)
 

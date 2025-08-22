@@ -3,8 +3,55 @@
 
 {% block title %}Analytics - CRM{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-  <h1 class="text-2xl font-bold">Analytics</h1>
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Analytics</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Projects -->
+    <div class="bg-white p-5 rounded-2xl border flex justify-between items-center">
+        <div>
+            <p class="text-sm text-gray-500">Total Projets</p>
+            <p class="text-3xl font-bold text-gray-800">{{ total_projects }}</p>
+            <p class="text-xs text-gray-500 mt-1">+{{ new_this_week }} nouveaux cette semaine</p>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+        </div>
+    </div>
+    <!-- Cancelled Projects -->
+    <div class="bg-white p-5 rounded-2xl border flex justify-between items-center">
+        <div>
+            <p class="text-sm text-gray-500">Annuler</p>
+            <p class="text-3xl font-bold text-red-500">{{ cancelled_projects }}</p>
+            <p class="text-xs text-gray-500 mt-1">&nbsp;</p> <!-- to keep alignment -->
+        </div>
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </div>
+    </div>
+    <!-- In Progress Projects -->
+    <div class="bg-white p-5 rounded-2xl border flex justify-between items-center">
+        <div>
+            <p class="text-sm text-gray-500">En cours</p>
+            <p class="text-3xl font-bold text-blue-500">{{ in_progress_projects }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ overdue_in_progress }} en retard</p>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        </div>
+    </div>
+    <!-- Completed Projects -->
+    <div class="bg-white p-5 rounded-2xl border flex justify-between items-center">
+        <div>
+            <p class="text-sm text-gray-500">Terminés</p>
+            <p class="text-3xl font-bold text-green-500">{{ completed_projects }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ completed_this_week }} cette semaine</p>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -31,6 +78,12 @@
     <h3 class="text-lg font-semibold mb-4">Répartition par statut</h3>
     <div class="relative h-80"><canvas id="statusChart"></canvas></div>
   </div>
+
+  <!-- Chart 5: Project Specialist Workflow -->
+  <div class="bg-white rounded-2xl border shadow-sm p-5">
+    <h3 class="text-lg font-semibold mb-4">Workflow par spécialiste de projet</h3>
+    <div class="relative h-80"><canvas id="specialistChart"></canvas></div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
@@ -50,23 +103,42 @@
   new Chart(document.getElementById('worktypeChart'), {
     type: 'doughnut',
     data: {
-      labels: [{% for l in worktype_labels %}"{{ l|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+      labels: [{% for item in worktype_data %}"{{ item.label|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
       datasets: [{
-        data: [{% for v in worktype_values %}{{ v }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+        data: [{% for item in worktype_data %}{{ item.value }}{% if not forloop.last %}, {% endif %}{% endfor %}],
         backgroundColor: Object.values(CHART_COLORS),
       }]
     },
-    options: { responsive: true, maintainAspectRatio: false }
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        const value = context.raw;
+                        const percentage = [{% for item in worktype_data %}{{ item.percentage }}{% if not forloop.last %}, {% endif %}{% endfor %}][context.dataIndex];
+                        label += `${value} (${percentage}%)`;
+                        return label;
+                    }
+                }
+            }
+        }
+    }
   });
 
-  // Chart 2: On-time vs Overdue
+  // Chart 2: On-time vs Overdue vs Cancelled
   new Chart(document.getElementById('onTimeChart'), {
     type: 'pie',
     data: {
-      labels: ['À temps', 'En retard'],
+      labels: ['À temps', 'En retard', 'Annulé'],
       datasets: [{
-        data: [{{ on_time_count }}, {{ overdue_count }}],
-        backgroundColor: [CHART_COLORS.green, CHART_COLORS.red],
+        data: [{{ on_time_count }}, {{ overdue_count }}, {{ cancelled_count }}],
+        backgroundColor: [CHART_COLORS.green, CHART_COLORS.red, CHART_COLORS.grey],
       }]
     },
     options: { responsive: true, maintainAspectRatio: false }
@@ -107,6 +179,43 @@
       maintainAspectRatio: false,
       scales: { y: { beginAtZero: true } },
       plugins: { legend: { display: false } }
+    }
+  });
+
+  // Chart 5: Specialist Workflow
+  new Chart(document.getElementById('specialistChart'), {
+    type: 'doughnut',
+    data: {
+      labels: [{% for l in specialist_labels %}"{{ l|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+      datasets: [{
+        data: [{% for v in specialist_values %}{{ v }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+        backgroundColor: Object.values(CHART_COLORS),
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              let label = context.label || '';
+              if (label) {
+                label += ': ';
+              }
+              if (context.parsed !== null) {
+                const total = {{ total_projects }};
+                const percentage = (context.parsed / total * 100).toFixed(2) + '%';
+                label += `${context.raw} (${percentage})`;
+              }
+              return label;
+            }
+          }
+        }
+      }
     }
   });
 })();
