@@ -937,37 +937,7 @@ def project_create_view(request, pk=None):
 # ------------------ Detail ------------------
 @login_required
 def project_detail_view(request, pk):
-    tech = _sync_user_and_technician_from_directory(request.user)
-    p = (
-        get_object_or_404(Project, pk=pk)
-        if getattr(tech, "is_manager", False)
-        else get_object_or_404(
-            Project, Q(pk=pk) & (Q(technician=tech) | Q(created_by=request.user))
-        )
-    )
-    is_creator = p.created_by_id == request.user.id
-
-    # progress bar value for phases
-    total_phases = 3
-    phases_completed = p.phases_completed
-    phase_progress_pct = int(phases_completed * 100 / total_phases)
-
-    items = (
-        ChecklistItem.objects.filter(project=p)
-        .prefetch_related("notes", "images")
-        .order_by("order", "id")
-    )
-
-    context = {
-        "project": p,
-        "technician": tech,
-        "is_creator": is_creator,
-        "phase_progress_pct": phase_progress_pct,
-        "items": items,
-        "total_phases": total_phases,
-        "phases_completed": phases_completed,
-    }
-    return render(request, "project_detail.html", context)
+    return redirect("project_update", pk=pk)
 
 
 # ------------------ Team dashboard ------------------

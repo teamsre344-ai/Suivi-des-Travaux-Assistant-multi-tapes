@@ -55,11 +55,11 @@
 
   <div class="mb-6 border-b border-gray-200">
       <div id="form-menu" class="flex justify-center -mb-px">
-          <div class="menu-item active" data-section="0">Informations principales et Planification</div>
-          <div class="menu-item" data-section="1">Détails Techniques</div>
           {% if form.instance.pk %}
-          <div class="menu-item" data-section="2">Détails du projet</div>
+          <div class="menu-item active" data-section="0">Détails du projet</div>
           {% endif %}
+          <div class="menu-item {% if not form.instance.pk %}active{% endif %}" data-section="1">Informations principales et Planification</div>
+          <div class="menu-item" data-section="2">Détails Techniques</div>
       </div>
   </div>
 
@@ -67,8 +67,15 @@
     {% csrf_token %}
     <div id="wizard-form">
 
-      <!-- Section principale -->
+      <!-- Section détails du projet -->
+      {% if form.instance.pk %}
       <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full">
+        {% include "_project_detail_content.html" %}
+      </div>
+      {% endif %}
+
+      <!-- Section principale -->
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" {% if form.instance.pk %}style="display: none;"{% endif %}>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
             <label for="{{ form.project_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Numéro de projet</label>
@@ -172,21 +179,12 @@
           </div>
         </div>
       </div>
-
-      <!-- Section détails du projet -->
-      {% if form.instance.pk %}
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
-        {% include "_project_detail_content.html" %}
-      </div>
-      {% endif %}
     </div>
 
     <!-- Boutons d'action -->
     <div class="mt-8 flex items-center justify-end gap-4">
       <a href="{% url 'project_list' %}" class="text-sm font-semibold text-gray-600 hover:text-gray-800">Annuler</a>
-      <button type="button" id="back-btn" class="px-6 py-2.5 rounded-full bg-gray-300 text-gray-800 font-semibold shadow-sm hover:bg-gray-400 active:scale-[0.99] transition" style="display: none;">Précédent</button>
-      <button type="button" id="next-btn" class="px-6 py-2.5 rounded-full bg-indigo-500 text-white font-semibold shadow-sm hover:bg-indigo-600 active:scale-[0.99] transition">Suivant</button>
-      <button type="submit" id="submit-btn" class="px-6 py-2.5 rounded-full bg-indigo-600 text-white font-semibold shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition" style="display: none;">
+      <button type="submit" id="submit-btn" class="px-6 py-2.5 rounded-full bg-indigo-600 text-white font-semibold shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition">
         {% if form.instance.pk %}
           Enregistrer les modifications
         {% else %}
@@ -200,58 +198,12 @@
 document.addEventListener('DOMContentLoaded', function () {
     const formSections = Array.from(document.querySelectorAll('.form-section'));
     const menuItems = Array.from(document.querySelectorAll('.menu-item'));
-    const backBtn = document.getElementById('back-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const submitBtn = document.getElementById('submit-btn');
-    const form = document.querySelector('form');
-    let currentSectionIndex = 0;
-    let project_pk = '{{ form.instance.pk|default:"" }}';
-
-    async function saveSectionData() {
-        const formData = new FormData(form);
-        const url = project_pk ? `/projects/${project_pk}/save_section/` : '/projects/save_section/';
-        
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                if (data.pk) {
-                    project_pk = data.pk;
-                }
-                return true;
-            } else {
-                // Handle and display errors
-                console.error('Validation errors:', data.errors);
-                // You can add code here to display errors to the user
-                alert('There was an error saving the form. Please check the console for details.');
-                return false;
-            }
-        } catch (error) {
-            console.error('Error saving section data:', error);
-            alert('An unexpected error occurred. Please try again.');
-            return false;
-        }
-    }
-
-    function updateButtons() {
-        backBtn.style.display = currentSectionIndex === 0 ? 'none' : 'inline-block';
-        const isLastSection = currentSectionIndex === formSections.length - 1;
-        nextBtn.style.display = isLastSection ? 'none' : 'inline-block';
-        submitBtn.style.display = isLastSection ? 'inline-block' : 'none';
-    }
 
     function showSection(index) {
         formSections.forEach((section, i) => {
             const sectionElement = section;
-            if (i === index) {
+            const dataSection = parseInt(section.getAttribute('data-section-index') || i);
+            if (dataSection === index) {
                 sectionElement.style.display = 'block';
                 sectionElement.style.opacity = '1';
                 sectionElement.style.transform = 'translateX(0)';
@@ -262,16 +214,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        menuItems.forEach((item, i) => {
-            if (i === index) {
+        menuItems.forEach((item) => {
+            const itemIndex = parseInt(item.getAttribute('data-section'));
+            if (itemIndex === index) {
                 item.classList.add('active');
             } else {
                 item.classList.remove('active');
             }
         });
-
-        currentSectionIndex = index;
-        updateButtons();
     }
 
     menuItems.forEach(item => {
@@ -281,21 +231,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    nextBtn.addEventListener('click', async () => {
-        const saved = await saveSectionData();
-        if (saved && currentSectionIndex < formSections.length - 1) {
-            showSection(currentSectionIndex + 1);
-        }
-    });
-
-    backBtn.addEventListener('click', () => {
-        if (currentSectionIndex > 0) {
-            showSection(currentSectionIndex - 1);
-        }
-    });
-
+    // Assign data-section-index to each form section for reliable selection
+    const hasDetailsSection = {% if form.instance.pk %}true{% else %}false{% endif %};
+    if (hasDetailsSection) {
+        formSections[0].setAttribute('data-section-index', '0');
+        formSections[1].setAttribute('data-section-index', '1');
+        formSections[2].setAttribute('data-section-index', '2');
+    } else {
+        formSections[0].setAttribute('data-section-index', '1');
+        formSections[1].setAttribute('data-section-index', '2');
+    }
+    
     // Initial state
-    showSection(0);
+    showSection({% if form.instance.pk %}0{% else %}1{% endif %});
 
     // Pre-fill form for editing
     {% if form.instance.pk %}
