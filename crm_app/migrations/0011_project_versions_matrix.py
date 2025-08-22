@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0010_alter_checklisttemplate_options_and_more'),
+        ("crm_app", "0010_alter_checklisttemplate_options_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='versions_matrix',
-            field=models.TextField(blank=True, help_text='Collez ici le tableau des versions (Markdown/CSV/texte).'),
+            model_name="project",
+            name="versions_matrix",
+            field=models.TextField(
+                blank=True,
+                help_text="Collez ici le tableau des versions (Markdown/CSV/texte).",
+            ),
         ),
     ]

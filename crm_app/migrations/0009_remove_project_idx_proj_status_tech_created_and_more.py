@@ -6,60 +6,63 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0008_project_assigned_to_project_autres_produits_verifier_and_more'),
+        (
+            "crm_app",
+            "0008_project_assigned_to_project_autres_produits_verifier_and_more",
+        ),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_status_tech_created',
+            model_name="project",
+            name="idx_proj_status_tech_created",
         ),
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_env_prod',
+            model_name="project",
+            name="idx_proj_env_prod",
         ),
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_client_prod_status',
+            model_name="project",
+            name="idx_proj_client_prod_status",
         ),
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_client',
+            model_name="project",
+            name="idx_proj_client",
         ),
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_date',
+            model_name="project",
+            name="idx_proj_date",
         ),
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_creator_recent',
+            model_name="project",
+            name="idx_proj_creator_recent",
         ),
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_tech_recent',
+            model_name="project",
+            name="idx_proj_tech_recent",
         ),
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_phases',
+            model_name="project",
+            name="idx_proj_phases",
         ),
         migrations.RemoveIndex(
-            model_name='project',
-            name='idx_proj_geo_region',
+            model_name="project",
+            name="idx_proj_geo_region",
         ),
         migrations.RemoveField(
-            model_name='project',
-            name='bd',
+            model_name="project",
+            name="bd",
         ),
         migrations.RemoveField(
-            model_name='project',
-            name='projet_code',
+            model_name="project",
+            name="projet_code",
         ),
         migrations.RemoveField(
-            model_name='project',
-            name='ruleset',
+            model_name="project",
+            name="ruleset",
         ),
         migrations.RemoveField(
-            model_name='project',
-            name='serveur_bd',
+            model_name="project",
+            name="serveur_bd",
         ),
     ]

@@ -6,73 +6,104 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0002_projectruleset_remove_project_chk_proj_env_values_and_more'),
+        ("crm_app", "0002_projectruleset_remove_project_chk_proj_env_values_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='execution_completed_at',
+            model_name="project",
+            name="execution_completed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='execution_phase',
-            field=models.CharField(choices=[('not_started', 'Non démarrée'), ('in_progress', 'En cours'), ('completed', 'Complétée')], default='not_started', max_length=20),
+            model_name="project",
+            name="execution_phase",
+            field=models.CharField(
+                choices=[
+                    ("not_started", "Non démarrée"),
+                    ("in_progress", "En cours"),
+                    ("completed", "Complétée"),
+                ],
+                default="not_started",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='execution_started_at',
+            model_name="project",
+            name="execution_started_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='preparation_completed_at',
+            model_name="project",
+            name="preparation_completed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='preparation_phase',
-            field=models.CharField(choices=[('not_started', 'Non démarrée'), ('in_progress', 'En cours'), ('completed', 'Complétée')], default='not_started', max_length=20),
+            model_name="project",
+            name="preparation_phase",
+            field=models.CharField(
+                choices=[
+                    ("not_started", "Non démarrée"),
+                    ("in_progress", "En cours"),
+                    ("completed", "Complétée"),
+                ],
+                default="not_started",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='preparation_started_at',
+            model_name="project",
+            name="preparation_started_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='validation_completed_at',
+            model_name="project",
+            name="validation_completed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='validation_phase',
-            field=models.CharField(choices=[('not_started', 'Non démarrée'), ('in_progress', 'En cours'), ('completed', 'Complétée')], default='not_started', max_length=20),
+            model_name="project",
+            name="validation_phase",
+            field=models.CharField(
+                choices=[
+                    ("not_started", "Non démarrée"),
+                    ("in_progress", "En cours"),
+                    ("completed", "Complétée"),
+                ],
+                default="not_started",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='validation_started_at',
+            model_name="project",
+            name="validation_started_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddIndex(
-            model_name='project',
-            index=models.Index(fields=['created_by', '-created_at'], name='idx_proj_creator_recent'),
+            model_name="project",
+            index=models.Index(
+                fields=["created_by", "-created_at"], name="idx_proj_creator_recent"
+            ),
         ),
         migrations.AddIndex(
-            model_name='project',
-            index=models.Index(fields=['technician', '-created_at'], name='idx_proj_tech_recent'),
+            model_name="project",
+            index=models.Index(
+                fields=["technician", "-created_at"], name="idx_proj_tech_recent"
+            ),
         ),
         migrations.AddIndex(
-            model_name='project',
-            index=models.Index(fields=['preparation_phase', 'execution_phase', 'validation_phase'], name='idx_proj_phases'),
+            model_name="project",
+            index=models.Index(
+                fields=["preparation_phase", "execution_phase", "validation_phase"],
+                name="idx_proj_phases",
+            ),
         ),
         migrations.AddIndex(
-            model_name='technician',
-            index=models.Index(fields=['is_manager'], name='idx_tech_is_manager'),
+            model_name="technician",
+            index=models.Index(fields=["is_manager"], name="idx_tech_is_manager"),
         ),
         migrations.AddIndex(
-            model_name='technician',
-            index=models.Index(fields=['role'], name='idx_tech_role'),
+            model_name="technician",
+            index=models.Index(fields=["role"], name="idx_tech_role"),
         ),
     ]

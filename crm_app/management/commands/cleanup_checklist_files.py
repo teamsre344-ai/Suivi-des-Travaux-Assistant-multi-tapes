@@ -3,21 +3,17 @@ from django.utils import timezone
 from datetime import timedelta
 from crm_app.models import Project, ChecklistItemImage
 
+
 class Command(BaseCommand):
     help = "Supprime les images de checklist plus d'une semaine après la fin du projet"
 
     def handle(self, *args, **kwargs):
         cutoff = timezone.now() - timedelta(days=7)
         # Use validation_completed_at if present, else updated_at
-        completed = Project.objects.filter(status='completed').filter(
-            # either validation_completed_at <= cutoff OR updated_at <= cutoff
-        ).filter(
-            # We can't OR easily in filter: do it in Python:
-        )
 
         # Simpler: iterate only completed projects
         deleted, kept = 0, 0
-        for p in Project.objects.filter(status='completed'):
+        for p in Project.objects.filter(status="completed"):
             done_at = p.validation_completed_at or p.updated_at
             if not done_at or done_at > cutoff:
                 continue
@@ -32,4 +28,6 @@ class Command(BaseCommand):
                 except Exception:
                     kept += 1
 
-        self.stdout.write(self.style.SUCCESS(f"Images supprimées: {deleted} (gardées: {kept})"))
+        self.stdout.write(
+            self.style.SUCCESS(f"Images supprimées: {deleted} (gardées: {kept})")
+        )

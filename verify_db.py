@@ -1,7 +1,8 @@
-﻿import django
-django.setup()
-from django.conf import settings
+﻿from django.conf import settings
 from django.db import connection
+import django
+
+django.setup()
 
 print("ENGINE:", settings.DATABASES["default"]["ENGINE"])
 print("NAME:", settings.DATABASES["default"]["NAME"])

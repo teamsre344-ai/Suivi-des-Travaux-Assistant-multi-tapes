@@ -5,8 +5,6 @@ from typing import Dict, Tuple, Optional
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from django.db import transaction
-from django.utils.text import slugify
 
 from crm_app.models import Technician
 
@@ -29,22 +27,102 @@ class Person:
 
 # === Canonical team list (exact titles from your org picture; Patrick added as manager) ===
 TEAM: Tuple[Person, ...] = (
-    Person("Mahmoud", "Feki", "mahmoud.feki@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Ruben", "Geghamyan", "ruben.geghamyan@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Eric", "Lamontagne", "eric.lamontagne@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Frédéric", "Rousseau", "frederic.rousseau@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Éric", "Champagne", "eric.champagne@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Marc", "Banville", "marc.banville@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Halimatou", "Ly", "halimatou.ly@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Roméo", "Kutnjem", "romeo.kutnjem@lgisolutions.com", "Spécialiste, déploiement des solutions"),
-    Person("Sylvain", "Berthiaume", "sylvain.berthiaume@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Masamba", "Lema", "masamba.lema@lgisolutions.com", "Spécialiste principal, déploiement"),
-    Person("Taoufik", "Toughrai", "taoufik.toughrai@lgisolutions.com", "Spécialiste, déploiement des solutions"),
-    Person("Mambibe Frank", "Merari", "frank.binde@lgisolutions.com", "Spécialiste, déploiement des solutions"),
-    Person("Dounia", "ElBaine", "dounia.elbaine@lgisolutions.com", "Conseiller en planification"),
-    Person("Ann-Pier", "Lucas-Mercier", "ann-pier.lucas-mercier@lgisolutions.com", "Conseiller en planification"),
-    Person("Jessyca", "Lantagne", "jessyca.lantagne@lgisolutions.com", "Conseiller en planification"),
-    Person("Pierre Ernest", "Veillard", "pierre.veillard@lgisolutions.com", "Spécialiste principal, déploiement"),
+    Person(
+        "Mahmoud",
+        "Feki",
+        "mahmoud.feki@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Ruben",
+        "Geghamyan",
+        "ruben.geghamyan@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Eric",
+        "Lamontagne",
+        "eric.lamontagne@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Frédéric",
+        "Rousseau",
+        "frederic.rousseau@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Éric",
+        "Champagne",
+        "eric.champagne@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Marc",
+        "Banville",
+        "marc.banville@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Halimatou",
+        "Ly",
+        "halimatou.ly@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Roméo",
+        "Kutnjem",
+        "romeo.kutnjem@lgisolutions.com",
+        "Spécialiste, déploiement des solutions",
+    ),
+    Person(
+        "Sylvain",
+        "Berthiaume",
+        "sylvain.berthiaume@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Masamba",
+        "Lema",
+        "masamba.lema@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
+    Person(
+        "Taoufik",
+        "Toughrai",
+        "taoufik.toughrai@lgisolutions.com",
+        "Spécialiste, déploiement des solutions",
+    ),
+    Person(
+        "Mambibe Frank",
+        "Merari",
+        "frank.binde@lgisolutions.com",
+        "Spécialiste, déploiement des solutions",
+    ),
+    Person(
+        "Dounia",
+        "ElBaine",
+        "dounia.elbaine@lgisolutions.com",
+        "Conseiller en planification",
+    ),
+    Person(
+        "Ann-Pier",
+        "Lucas-Mercier",
+        "ann-pier.lucas-mercier@lgisolutions.com",
+        "Conseiller en planification",
+    ),
+    Person(
+        "Jessyca",
+        "Lantagne",
+        "jessyca.lantagne@lgisolutions.com",
+        "Conseiller en planification",
+    ),
+    Person(
+        "Pierre Ernest",
+        "Veillard",
+        "pierre.veillard@lgisolutions.com",
+        "Spécialiste principal, déploiement",
+    ),
     # Manager
     Person(
         "Patrick",
@@ -123,7 +201,12 @@ class Command(BaseCommand):
                 username = unique_username(username_base)
                 actions.append(f"CREATE User(username={username}, email={new_email})")
                 if commit:
-                    u = User(username=username, email=new_email, first_name=p.first_name, last_name=p.last_name)
+                    u = User(
+                        username=username,
+                        email=new_email,
+                        first_name=p.first_name,
+                        last_name=p.last_name,
+                    )
                     u.set_unusable_password()  # passwordless / allowlist flow
                     u.is_active = True
                     u.save()
@@ -138,7 +221,9 @@ class Command(BaseCommand):
                     need_update.append(f"last_name: {u.last_name} -> {p.last_name}")
 
                 if need_update:
-                    actions.append(f"UPDATE User({u.username}): " + "; ".join(need_update))
+                    actions.append(
+                        f"UPDATE User({u.username}): " + "; ".join(need_update)
+                    )
                     if commit:
                         u.email = new_email
                         u.first_name = p.first_name
@@ -148,19 +233,27 @@ class Command(BaseCommand):
 
             if commit:
                 # ensure Technician row
-                tech, _ = Technician.objects.get_or_create(user=u, defaults={"role": p.role})
+                tech, _ = Technician.objects.get_or_create(
+                    user=u, defaults={"role": p.role}
+                )
                 updates = []
                 if tech.role != p.role:
                     updates.append(f"role: {tech.role} -> {p.role}")
                     tech.role = p.role
                 if getattr(tech, "is_manager", False) != p.is_manager:
-                    updates.append(f"is_manager: {getattr(tech, 'is_manager', False)} -> {p.is_manager}")
+                    updates.append(
+                        f"is_manager: {getattr(tech, 'is_manager', False)} -> {p.is_manager}"
+                    )
                     setattr(tech, "is_manager", p.is_manager)
                 if updates:
-                    actions.append(f"UPDATE Technician({u.username}): " + "; ".join(updates))
+                    actions.append(
+                        f"UPDATE Technician({u.username}): " + "; ".join(updates)
+                    )
                     tech.save()
             else:
-                actions.append(f"ENSURE Technician(user for {p.email}) role='{p.role}' is_manager={p.is_manager}")
+                actions.append(
+                    f"ENSURE Technician(user for {p.email}) role='{p.role}' is_manager={p.is_manager}"
+                )
 
         # --- Optionally deactivate users not in the TEAM list ---
         if deactivate_missing:
@@ -168,7 +261,10 @@ class Command(BaseCommand):
                 email__iregex=r"@(?:lgisolutions\.com|logibe\.com)$"
             )
             for user in qs:
-                if user.email.lower() not in new_emails and user.email.lower() not in legacy_emails:
+                if (
+                    user.email.lower() not in new_emails
+                    and user.email.lower() not in legacy_emails
+                ):
                     if user.is_active:
                         actions.append(f"DEACTIVATE {user.username} ({user.email})")
                         if commit:

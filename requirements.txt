@@ -1,6 +1,11 @@
-Django==4.2.7
+Django==4.2.11
 python-decouple==3.8
 django-crispy-forms==2.1
 crispy-bootstrap5==2023.10
 psycopg[binary]==3.2.9
-xhtml2pdf
+gunicorn==21.2.0
+whitenoise==6.6.0
+django-axes==8.0.0
+black==24.4.2
+flake8==7.0.0
+django-debug-toolbar==4.3.0

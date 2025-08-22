@@ -6,37 +6,43 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0004_remove_technician_idx_tech_is_manager_and_more'),
+        ("crm_app", "0004_remove_technician_idx_tech_is_manager_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='latitude',
-            field=models.DecimalField(blank=True, decimal_places=6, max_digits=9, null=True),
+            model_name="project",
+            name="latitude",
+            field=models.DecimalField(
+                blank=True, decimal_places=6, max_digits=9, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='longitude',
-            field=models.DecimalField(blank=True, decimal_places=6, max_digits=9, null=True),
+            model_name="project",
+            name="longitude",
+            field=models.DecimalField(
+                blank=True, decimal_places=6, max_digits=9, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='site_city',
-            field=models.CharField(blank=True, default='', max_length=120),
+            model_name="project",
+            name="site_city",
+            field=models.CharField(blank=True, default="", max_length=120),
         ),
         migrations.AddField(
-            model_name='project',
-            name='site_country',
-            field=models.CharField(blank=True, default='CA', max_length=2),
+            model_name="project",
+            name="site_country",
+            field=models.CharField(blank=True, default="CA", max_length=2),
         ),
         migrations.AddField(
-            model_name='project',
-            name='site_region',
-            field=models.CharField(blank=True, default='', max_length=120),
+            model_name="project",
+            name="site_region",
+            field=models.CharField(blank=True, default="", max_length=120),
         ),
         migrations.AddIndex(
-            model_name='project',
-            index=models.Index(fields=['site_country', 'site_region'], name='idx_proj_geo_region'),
+            model_name="project",
+            index=models.Index(
+                fields=["site_country", "site_region"], name="idx_proj_geo_region"
+            ),
         ),
     ]

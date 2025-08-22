@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0011_project_versions_matrix'),
+        ("crm_app", "0011_project_versions_matrix"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='end_at',
-            field=models.DateTimeField(blank=True, help_text='Date et heure de fin du projet', null=True),
+            model_name="project",
+            name="end_at",
+            field=models.DateTimeField(
+                blank=True, help_text="Date et heure de fin du projet", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='start_at',
-            field=models.DateTimeField(blank=True, help_text='Date et heure de début du projet', null=True),
+            model_name="project",
+            name="start_at",
+            field=models.DateTimeField(
+                blank=True, help_text="Date et heure de début du projet", null=True
+            ),
         ),
     ]

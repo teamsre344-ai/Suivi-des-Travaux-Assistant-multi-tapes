@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.html import format_html
 from .models import (
     Technician,
     Project,
@@ -10,12 +9,19 @@ from .models import (
     ChecklistTemplate,
 )
 
+
 # ---------- Technicians ----------
 @admin.register(Technician)
 class TechnicianAdmin(admin.ModelAdmin):
     list_display = ("id", "user_full_name", "email", "role", "is_manager", "phone")
     list_filter = ("is_manager", "role")
-    search_fields = ("user__first_name", "user__last_name", "user__username", "user__email", "role")
+    search_fields = (
+        "user__first_name",
+        "user__last_name",
+        "user__username",
+        "user__email",
+        "role",
+    )
     ordering = ("user__first_name", "user__last_name")
 
     @admin.display(description="Nom")
@@ -39,44 +45,88 @@ class ChecklistItemInline(admin.TabularInline):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     list_display = (
-        "project_number", "client_name", "product", "environment", "status",
-        "assigned_to", "technician", "created_by", "created_at",
+        "project_number",
+        "client_name",
+        "product",
+        "environment",
+        "status",
+        "assigned_to",
+        "technician",
+        "created_by",
+        "created_at",
     )
     list_filter = ("environment", "status", "product", "work_type")
     search_fields = (
-        "project_number", "client_name", "product",
-        "technician__user__first_name", "technician__user__last_name",
-        "created_by__first_name", "created_by__last_name",
+        "project_number",
+        "client_name",
+        "product",
+        "technician__user__first_name",
+        "technician__user__last_name",
+        "created_by__first_name",
+        "created_by__last_name",
     )
     readonly_fields = ("created_at", "updated_at")
     inlines = [ChecklistItemInline]
     ordering = ("-created_at",)
 
     fieldsets = (
-        ("Assignation", {
-            "fields": ("assigned_to", "technician", "created_by"),
-        }),
-        ("Informations de base", {
-            "fields": (
-                "project_number", "environment", "client_name", "product", "work_type",
-                "database_name", "db_server", "app_server",
-                "fuse_validation", "certificate_validation",
-                "status", "sre_name", "sre_phone", "title", "date",
-            )
-        }),
-        ("Coordination des déploiements", {
-            "fields": (
-                "travaux_a_faire", "responsable_travaux",
-                "version_actuelle", "version_cible", "tables_m34",
-                "contact_tech_client_to", "contact_tech_client_cc", "autres_ressources_client_cc",
-                "courriel_confirmation_client", "note_importante", "taches_installations",
-                "equipe_dev_ajouter", "equipe_integration_ajouter", "bi_a_valider",
-                "autres_produits_verifier", "gestionnaire_projet",
-            )
-        }),
-        ("Checklist / Métadonnées", {
-            "fields": ("checklist_data", "created_at", "updated_at"),
-        }),
+        (
+            "Assignation",
+            {
+                "fields": ("assigned_to", "technician", "created_by"),
+            },
+        ),
+        (
+            "Informations de base",
+            {
+                "fields": (
+                    "project_number",
+                    "environment",
+                    "client_name",
+                    "product",
+                    "work_type",
+                    "database_name",
+                    "db_server",
+                    "app_server",
+                    "fuse_validation",
+                    "certificate_validation",
+                    "status",
+                    "sre_name",
+                    "sre_phone",
+                    "title",
+                    "date",
+                )
+            },
+        ),
+        (
+            "Coordination des déploiements",
+            {
+                "fields": (
+                    "travaux_a_faire",
+                    "responsable_travaux",
+                    "version_actuelle",
+                    "version_cible",
+                    "tables_m34",
+                    "contact_tech_client_to",
+                    "contact_tech_client_cc",
+                    "autres_ressources_client_cc",
+                    "courriel_confirmation_client",
+                    "note_importante",
+                    "taches_installations",
+                    "equipe_dev_ajouter",
+                    "equipe_integration_ajouter",
+                    "bi_a_valider",
+                    "autres_produits_verifier",
+                    "gestionnaire_projet",
+                )
+            },
+        ),
+        (
+            "Checklist / Métadonnées",
+            {
+                "fields": ("checklist_data", "created_at", "updated_at"),
+            },
+        ),
     )
 
 
@@ -116,5 +166,11 @@ class ChecklistItemImageAdmin(admin.ModelAdmin):
 @admin.register(ChecklistTemplate)
 class ChecklistTemplateAdmin(admin.ModelAdmin):
     list_display = ("name", "work_type", "owner", "created_at")
-    search_fields = ("name", "work_type", "owner__username", "owner__first_name", "owner__last_name")
+    search_fields = (
+        "name",
+        "work_type",
+        "owner__username",
+        "owner__first_name",
+        "owner__last_name",
+    )
     ordering = ("name",)

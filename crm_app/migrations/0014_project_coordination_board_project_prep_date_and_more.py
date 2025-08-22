@@ -7,48 +7,64 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0013_project_execution_phase_project_preparation_phase_and_more'),
+        ("crm_app", "0013_project_execution_phase_project_preparation_phase_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='coordination_board',
-            field=models.ImageField(blank=True, null=True, upload_to=crm_app.models.coordination_board_path),
+            model_name="project",
+            name="coordination_board",
+            field=models.ImageField(
+                blank=True, null=True, upload_to=crm_app.models.coordination_board_path
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='prep_date',
+            model_name="project",
+            name="prep_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='prep_end_time',
+            model_name="project",
+            name="prep_end_time",
             field=models.TimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='prep_start_time',
+            model_name="project",
+            name="prep_start_time",
             field=models.TimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='prod_date',
+            model_name="project",
+            name="prod_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='prod_end_time',
+            model_name="project",
+            name="prod_end_time",
             field=models.TimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='prod_start_time',
+            model_name="project",
+            name="prod_start_time",
             field=models.TimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='status',
-            field=models.CharField(choices=[('pending', 'En attente'), ('in_progress', 'En cours'), ('completed', 'Terminé'), ('on_hold', 'En pause'), ('cancelled', 'Annulé'), ('waiting_on_client', 'En attente du client'), ('waiting_on_internal', 'En attente interne'), ('preparation', 'Préparation'), ('production', 'Production')], default='pending', max_length=32),
+            model_name="project",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "En attente"),
+                    ("in_progress", "En cours"),
+                    ("completed", "Terminé"),
+                    ("on_hold", "En pause"),
+                    ("cancelled", "Annulé"),
+                    ("waiting_on_client", "En attente du client"),
+                    ("waiting_on_internal", "En attente interne"),
+                    ("preparation", "Préparation"),
+                    ("production", "Production"),
+                ],
+                default="pending",
+                max_length=32,
+            ),
         ),
     ]

@@ -16,122 +16,308 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Project',
+            name="Project",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('project_number', models.CharField(max_length=50, unique=True)),
-                ('environment', models.CharField(choices=[('test', 'Test'), ('prod', 'Production')], db_index=True, max_length=10)),
-                ('client_name', models.CharField(db_index=True, max_length=100)),
-                ('product', models.CharField(choices=[('GRF', 'GRF'), ('GRM', 'GRM'), ('GFM', 'GFM'), ('Clinibase CI', 'Clinibase CI'), ('GRH', 'GRH'), ('eClinibase', 'eClinibase'), ('SIurge', 'SIurge'), ('Sicheld', 'Sicheld'), ('Med Echo', 'Med Echo'), ('I-CLSC', 'I-CLSC'), ('RadImage', 'RadImage')], db_index=True, max_length=50)),
-                ('date', models.DateField(db_index=True, default=django.utils.timezone.now)),
-                ('database_name', models.CharField(db_index=True, max_length=100)),
-                ('db_server', models.CharField(db_index=True, max_length=100)),
-                ('app_server', models.CharField(db_index=True, max_length=100)),
-                ('fuse_validation', models.CharField(default='NOK', max_length=10)),
-                ('certificate_validation', models.CharField(default='NOK', max_length=10)),
-                ('work_type', models.CharField(choices=[('Migration', 'Migration'), ('Mise a niveau', 'Mise à niveau'), ('Rehaussement', 'Rehaussement'), ('Demenagement', 'Déménagement'), ('Copie de BD', 'Copie de BD'), ('Installation poste de Support', 'Installation poste de Support')], db_index=True, default='Migration', max_length=50)),
-                ('sre_name', models.CharField(blank=True, max_length=100)),
-                ('sre_phone', models.CharField(blank=True, max_length=20)),
-                ('status', models.CharField(choices=[('pending', 'En attente'), ('in_progress', 'En cours'), ('completed', 'Terminé'), ('on_hold', 'En pause'), ('cancelled', 'Annulé')], db_index=True, default='pending', max_length=20)),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True, db_index=True)),
-                ('checklist_data', models.JSONField(blank=True, default=dict)),
-                ('timeline_data', models.JSONField(blank=True, default=dict)),
-                ('error_impact', models.TextField(blank=True)),
-                ('error_solution', models.TextField(blank=True)),
-                ('rollback_planned', models.BooleanField(db_index=True, default=False)),
-                ('created_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_projects', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=200)),
+                ("project_number", models.CharField(max_length=50, unique=True)),
+                (
+                    "environment",
+                    models.CharField(
+                        choices=[("test", "Test"), ("prod", "Production")],
+                        db_index=True,
+                        max_length=10,
+                    ),
+                ),
+                ("client_name", models.CharField(db_index=True, max_length=100)),
+                (
+                    "product",
+                    models.CharField(
+                        choices=[
+                            ("GRF", "GRF"),
+                            ("GRM", "GRM"),
+                            ("GFM", "GFM"),
+                            ("Clinibase CI", "Clinibase CI"),
+                            ("GRH", "GRH"),
+                            ("eClinibase", "eClinibase"),
+                            ("SIurge", "SIurge"),
+                            ("Sicheld", "Sicheld"),
+                            ("Med Echo", "Med Echo"),
+                            ("I-CLSC", "I-CLSC"),
+                            ("RadImage", "RadImage"),
+                        ],
+                        db_index=True,
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "date",
+                    models.DateField(db_index=True, default=django.utils.timezone.now),
+                ),
+                ("database_name", models.CharField(db_index=True, max_length=100)),
+                ("db_server", models.CharField(db_index=True, max_length=100)),
+                ("app_server", models.CharField(db_index=True, max_length=100)),
+                ("fuse_validation", models.CharField(default="NOK", max_length=10)),
+                (
+                    "certificate_validation",
+                    models.CharField(default="NOK", max_length=10),
+                ),
+                (
+                    "work_type",
+                    models.CharField(
+                        choices=[
+                            ("Migration", "Migration"),
+                            ("Mise a niveau", "Mise à niveau"),
+                            ("Rehaussement", "Rehaussement"),
+                            ("Demenagement", "Déménagement"),
+                            ("Copie de BD", "Copie de BD"),
+                            (
+                                "Installation poste de Support",
+                                "Installation poste de Support",
+                            ),
+                        ],
+                        db_index=True,
+                        default="Migration",
+                        max_length=50,
+                    ),
+                ),
+                ("sre_name", models.CharField(blank=True, max_length=100)),
+                ("sre_phone", models.CharField(blank=True, max_length=20)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "En attente"),
+                            ("in_progress", "En cours"),
+                            ("completed", "Terminé"),
+                            ("on_hold", "En pause"),
+                            ("cancelled", "Annulé"),
+                        ],
+                        db_index=True,
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True, db_index=True)),
+                ("checklist_data", models.JSONField(blank=True, default=dict)),
+                ("timeline_data", models.JSONField(blank=True, default=dict)),
+                ("error_impact", models.TextField(blank=True)),
+                ("error_solution", models.TextField(blank=True)),
+                ("rollback_planned", models.BooleanField(db_index=True, default=False)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_projects",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='TimelineEntry',
+            name="TimelineEntry",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('environment', models.CharField(choices=[('test', 'Test'), ('prod', 'Production')], max_length=10)),
-                ('event_label', models.CharField(max_length=200)),
-                ('event_time', models.DateTimeField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='timeline_entries', to='crm_app.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "environment",
+                    models.CharField(
+                        choices=[("test", "Test"), ("prod", "Production")],
+                        max_length=10,
+                    ),
+                ),
+                ("event_label", models.CharField(max_length=200)),
+                ("event_time", models.DateTimeField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="timeline_entries",
+                        to="crm_app.project",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['environment', 'event_time'],
+                "ordering": ["environment", "event_time"],
             },
         ),
         migrations.CreateModel(
-            name='Technician',
+            name="Technician",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phone', models.CharField(blank=True, db_index=True, max_length=20)),
-                ('role', models.CharField(default='Technicien', max_length=50)),
-                ('is_manager', models.BooleanField(db_index=True, default=False)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("phone", models.CharField(blank=True, db_index=True, max_length=20)),
+                ("role", models.CharField(default="Technicien", max_length=50)),
+                ("is_manager", models.BooleanField(db_index=True, default=False)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='project',
-            name='technician',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='projects', to='crm_app.technician'),
+            model_name="project",
+            name="technician",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="projects",
+                to="crm_app.technician",
+            ),
         ),
         migrations.CreateModel(
-            name='ChecklistItem',
+            name="ChecklistItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('label', models.CharField(max_length=200)),
-                ('completed', models.BooleanField(default=False)),
-                ('completed_at', models.DateTimeField(blank=True, null=True)),
-                ('order', models.IntegerField(default=0)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='checklist_items', to='crm_app.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("label", models.CharField(max_length=200)),
+                ("completed", models.BooleanField(default=False)),
+                ("completed_at", models.DateTimeField(blank=True, null=True)),
+                ("order", models.IntegerField(default=0)),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="checklist_items",
+                        to="crm_app.project",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['order'],
+                "ordering": ["order"],
             },
         ),
         migrations.AddIndex(
-            model_name='technician',
-            index=models.Index(fields=['is_manager'], name='idx_tech_is_manager'),
+            model_name="technician",
+            index=models.Index(fields=["is_manager"], name="idx_tech_is_manager"),
         ),
         migrations.AddIndex(
-            model_name='technician',
-            index=models.Index(fields=['role'], name='idx_tech_role'),
+            model_name="technician",
+            index=models.Index(fields=["role"], name="idx_tech_role"),
         ),
         migrations.AddIndex(
-            model_name='project',
-            index=models.Index(fields=['status', 'technician', 'created_at'], name='idx_proj_status_tech_created'),
+            model_name="project",
+            index=models.Index(
+                fields=["status", "technician", "created_at"],
+                name="idx_proj_status_tech_created",
+            ),
         ),
         migrations.AddIndex(
-            model_name='project',
-            index=models.Index(fields=['environment', 'product'], name='idx_proj_env_prod'),
+            model_name="project",
+            index=models.Index(
+                fields=["environment", "product"], name="idx_proj_env_prod"
+            ),
         ),
         migrations.AddIndex(
-            model_name='project',
-            index=models.Index(fields=['client_name', 'product', 'status'], name='idx_proj_client_prod_status'),
+            model_name="project",
+            index=models.Index(
+                fields=["client_name", "product", "status"],
+                name="idx_proj_client_prod_status",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='project',
-            constraint=models.CheckConstraint(check=models.Q(('environment__in', ['test', 'prod'])), name='chk_proj_env_values'),
+            model_name="project",
+            constraint=models.CheckConstraint(
+                check=models.Q(("environment__in", ["test", "prod"])),
+                name="chk_proj_env_values",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='project',
-            constraint=models.CheckConstraint(check=models.Q(('status__in', ['pending', 'in_progress', 'completed', 'on_hold', 'cancelled'])), name='chk_proj_status_values'),
+            model_name="project",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    (
+                        "status__in",
+                        ["pending", "in_progress", "completed", "on_hold", "cancelled"],
+                    )
+                ),
+                name="chk_proj_status_values",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='project',
-            constraint=models.CheckConstraint(check=models.Q(('work_type__in', ['Migration', 'Mise a niveau', 'Rehaussement', 'Demenagement', 'Copie de BD', 'Installation poste de Support'])), name='chk_proj_worktype_values'),
+            model_name="project",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    (
+                        "work_type__in",
+                        [
+                            "Migration",
+                            "Mise a niveau",
+                            "Rehaussement",
+                            "Demenagement",
+                            "Copie de BD",
+                            "Installation poste de Support",
+                        ],
+                    )
+                ),
+                name="chk_proj_worktype_values",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='project',
-            constraint=models.CheckConstraint(check=models.Q(('fuse_validation__in', ['OK', 'NOK'])), name='chk_proj_fuse_values'),
+            model_name="project",
+            constraint=models.CheckConstraint(
+                check=models.Q(("fuse_validation__in", ["OK", "NOK"])),
+                name="chk_proj_fuse_values",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='project',
-            constraint=models.CheckConstraint(check=models.Q(('certificate_validation__in', ['OK', 'NOK'])), name='chk_proj_cert_values'),
+            model_name="project",
+            constraint=models.CheckConstraint(
+                check=models.Q(("certificate_validation__in", ["OK", "NOK"])),
+                name="chk_proj_cert_values",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='project',
-            constraint=models.CheckConstraint(check=models.Q(('environment', 'test'), models.Q(('environment', 'prod'), models.Q(('sre_name', ''), _negated=True), models.Q(('sre_phone', ''), _negated=True)), _connector='OR'), name='chk_proj_prod_requires_sre'),
+            model_name="project",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("environment", "test"),
+                    models.Q(
+                        ("environment", "prod"),
+                        models.Q(("sre_name", ""), _negated=True),
+                        models.Q(("sre_phone", ""), _negated=True),
+                    ),
+                    _connector="OR",
+                ),
+                name="chk_proj_prod_requires_sre",
+            ),
         ),
     ]

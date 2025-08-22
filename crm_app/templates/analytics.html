@@ -1,8 +1,114 @@
 {% extends 'base.html' %}
-{% block title %}Performance — CRM{% endblock %}
+{% load humanize %}
+
+{% block title %}Analytics - CRM{% endblock %}
 {% block content %}
-<div class="bg-white rounded-2xl border p-6 shadow-sm">
-  <h1 class="text-2xl font-semibold mb-2">Performance (aperçu)</h1>
-  <p class="text-gray-600">Page de destination pour les métriques détaillées. À compléter selon vos besoins.</p>
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-bold">Analytics</h1>
 </div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Chart 1: Work Type Distribution -->
+  <div class="bg-white rounded-2xl border shadow-sm p-5">
+    <h3 class="text-lg font-semibold mb-4">Répartition par type de travaux</h3>
+    <div class="relative h-80"><canvas id="worktypeChart"></canvas></div>
+  </div>
+
+  <!-- Chart 2: On-time vs. Overdue -->
+  <div class="bg-white rounded-2xl border shadow-sm p-5">
+    <h3 class="text-lg font-semibold mb-4">Projets terminés: à temps vs. en retard</h3>
+    <div class="relative h-80"><canvas id="onTimeChart"></canvas></div>
+  </div>
+
+  <!-- Chart 3: Top 10 Clients -->
+  <div class="bg-white rounded-2xl border shadow-sm p-5">
+    <h3 class="text-lg font-semibold mb-4">Top 10 des clients</h3>
+    <div class="relative h-80"><canvas id="clientChart"></canvas></div>
+  </div>
+
+  <!-- Chart 4: Project Status -->
+  <div class="bg-white rounded-2xl border shadow-sm p-5">
+    <h3 class="text-lg font-semibold mb-4">Répartition par statut</h3>
+    <div class="relative h-80"><canvas id="statusChart"></canvas></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<script>
+(function () {
+  const CHART_COLORS = {
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)'
+  };
+
+  // Chart 1: Work Type
+  new Chart(document.getElementById('worktypeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: [{% for l in worktype_labels %}"{{ l|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+      datasets: [{
+        data: [{% for v in worktype_values %}{{ v }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+        backgroundColor: Object.values(CHART_COLORS),
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  // Chart 2: On-time vs Overdue
+  new Chart(document.getElementById('onTimeChart'), {
+    type: 'pie',
+    data: {
+      labels: ['À temps', 'En retard'],
+      datasets: [{
+        data: [{{ on_time_count }}, {{ overdue_count }}],
+        backgroundColor: [CHART_COLORS.green, CHART_COLORS.red],
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  // Chart 3: Top Clients
+  new Chart(document.getElementById('clientChart'), {
+    type: 'bar',
+    data: {
+      labels: [{% for l in client_labels %}"{{ l|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+      datasets: [{
+        label: 'Nombre de projets',
+        data: [{% for v in client_values %}{{ v }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+        backgroundColor: CHART_COLORS.blue,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Chart 4: Status
+  new Chart(document.getElementById('statusChart'), {
+    type: 'bar',
+    data: {
+      labels: [{% for l in status_labels %}"{{ l|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+      datasets: [{
+        label: 'Nombre de projets',
+        data: [{% for v in status_values %}{{ v }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+        backgroundColor: [CHART_COLORS.yellow, CHART_COLORS.blue, CHART_COLORS.green, CHART_COLORS.grey],
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { display: false } }
+    }
+  });
+})();
+</script>
 {% endblock %}

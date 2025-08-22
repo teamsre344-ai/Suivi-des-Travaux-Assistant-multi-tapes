@@ -8,42 +8,65 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0014_project_coordination_board_project_prep_date_and_more'),
+        ("crm_app", "0014_project_coordination_board_project_prep_date_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='timelineentry',
-            options={'ordering': ['-event_time']},
+            name="timelineentry",
+            options={"ordering": ["-event_time"]},
         ),
         migrations.AlterField(
-            model_name='project',
-            name='client_name',
+            model_name="project",
+            name="client_name",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='environment',
-            field=models.CharField(choices=[('test', 'Test'), ('prod', 'Production')], default='test', max_length=10),
+            model_name="project",
+            name="environment",
+            field=models.CharField(
+                choices=[("test", "Test"), ("prod", "Production")],
+                default="test",
+                max_length=10,
+            ),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='product',
+            model_name="project",
+            name="product",
             field=models.CharField(blank=True, max_length=50),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='status',
-            field=models.CharField(choices=[('pending', 'En attente'), ('in_progress', 'En cours'), ('completed', 'Terminé'), ('on_hold', 'En pause'), ('cancelled', 'Annulé'), ('assigned', 'Assigné'), ('waiting_on_client', 'En attente du client'), ('waiting_on_internal', 'En attente interne'), ('preparation', 'Préparation'), ('production', 'Production')], default='assigned', max_length=32),
+            model_name="project",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "En attente"),
+                    ("in_progress", "En cours"),
+                    ("completed", "Terminé"),
+                    ("on_hold", "En pause"),
+                    ("cancelled", "Annulé"),
+                    ("assigned", "Assigné"),
+                    ("waiting_on_client", "En attente du client"),
+                    ("waiting_on_internal", "En attente interne"),
+                    ("preparation", "Préparation"),
+                    ("production", "Production"),
+                ],
+                default="assigned",
+                max_length=32,
+            ),
         ),
         migrations.AlterField(
-            model_name='timelineentry',
-            name='event_time',
+            model_name="timelineentry",
+            name="event_time",
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
         migrations.AlterField(
-            model_name='timelineentry',
-            name='project',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='timeline', to='crm_app.project'),
+            model_name="timelineentry",
+            name="project",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="timeline",
+                to="crm_app.project",
+            ),
         ),
     ]

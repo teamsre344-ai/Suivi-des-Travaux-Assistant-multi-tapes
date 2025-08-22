@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0006_checklisttemplate_checklistitemnote_and_more'),
+        ("crm_app", "0006_checklisttemplate_checklistitemnote_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='technician',
-            name='role',
-            field=models.CharField(default='Technicien', max_length=500),
+            model_name="technician",
+            name="role",
+            field=models.CharField(default="Technicien", max_length=500),
         ),
     ]

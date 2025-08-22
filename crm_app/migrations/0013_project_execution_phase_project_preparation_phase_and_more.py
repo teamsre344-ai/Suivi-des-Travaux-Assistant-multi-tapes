@@ -6,23 +6,47 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0012_project_end_at_project_start_at'),
+        ("crm_app", "0012_project_end_at_project_start_at"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='execution_phase',
-            field=models.CharField(choices=[('not_started', 'Non démarrée'), ('in_progress', 'En cours'), ('completed', 'Complétée')], default='not_started', max_length=20),
+            model_name="project",
+            name="execution_phase",
+            field=models.CharField(
+                choices=[
+                    ("not_started", "Non démarrée"),
+                    ("in_progress", "En cours"),
+                    ("completed", "Complétée"),
+                ],
+                default="not_started",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='preparation_phase',
-            field=models.CharField(choices=[('not_started', 'Non démarrée'), ('in_progress', 'En cours'), ('completed', 'Complétée')], default='not_started', max_length=20),
+            model_name="project",
+            name="preparation_phase",
+            field=models.CharField(
+                choices=[
+                    ("not_started", "Non démarrée"),
+                    ("in_progress", "En cours"),
+                    ("completed", "Complétée"),
+                ],
+                default="not_started",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='validation_phase',
-            field=models.CharField(choices=[('not_started', 'Non démarrée'), ('in_progress', 'En cours'), ('completed', 'Complétée')], default='not_started', max_length=20),
+            model_name="project",
+            name="validation_phase",
+            field=models.CharField(
+                choices=[
+                    ("not_started", "Non démarrée"),
+                    ("in_progress", "En cours"),
+                    ("completed", "Complétée"),
+                ],
+                default="not_started",
+                max_length=20,
+            ),
         ),
     ]

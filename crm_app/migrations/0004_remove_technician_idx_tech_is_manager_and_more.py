@@ -6,36 +6,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crm_app', '0003_project_execution_completed_at_and_more'),
+        ("crm_app", "0003_project_execution_completed_at_and_more"),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='technician',
-            name='idx_tech_is_manager',
+            model_name="technician",
+            name="idx_tech_is_manager",
         ),
         migrations.RemoveIndex(
-            model_name='technician',
-            name='idx_tech_role',
+            model_name="technician",
+            name="idx_tech_role",
         ),
         migrations.AddField(
-            model_name='technician',
-            name='avatar_url',
-            field=models.URLField(blank=True, default=''),
+            model_name="technician",
+            name="avatar_url",
+            field=models.URLField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='technician',
-            name='location',
-            field=models.CharField(blank=True, default='', max_length=120),
+            model_name="technician",
+            name="location",
+            field=models.CharField(blank=True, default="", max_length=120),
         ),
         migrations.AddField(
-            model_name='technician',
-            name='preferences',
+            model_name="technician",
+            name="preferences",
             field=models.JSONField(blank=True, default=dict),
         ),
         migrations.AddField(
-            model_name='technician',
-            name='title',
-            field=models.CharField(blank=True, default='', max_length=60),
+            model_name="technician",
+            name="title",
+            field=models.CharField(blank=True, default="", max_length=60),
         ),
     ]
