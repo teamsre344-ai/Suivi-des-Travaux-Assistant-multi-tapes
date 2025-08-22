@@ -186,6 +186,27 @@ class ProjectForm(forms.ModelForm):
         widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
     )
 
+    prep_start_time = forms.TimeField(
+        label="Heure début (préparation)",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+    )
+    prep_end_time = forms.TimeField(
+        label="Heure fin (préparation)",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+    )
+    prod_start_time = forms.TimeField(
+        label="Heure début (production)",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+    )
+    prod_end_time = forms.TimeField(
+        label="Heure fin (production)",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+    )
+
     class Meta:
         model = Project
         fields = [

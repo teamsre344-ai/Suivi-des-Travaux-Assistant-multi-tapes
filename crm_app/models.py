@@ -109,6 +109,7 @@ class Project(models.Model):
     )
     date = models.DateField(default=timezone.now)
 
+    application_name = models.CharField(max_length=100, blank=True)
     database_name = models.CharField(max_length=100, blank=True)
     db_server = models.CharField(max_length=100, blank=True)
     app_server = models.CharField(max_length=100, blank=True)
@@ -144,16 +145,15 @@ class Project(models.Model):
     preparation_phase = models.CharField(
         max_length=20, choices=PHASE_CHOICES, default="not_started"
     )
-    execution_phase = models.CharField(
-        max_length=20, choices=PHASE_CHOICES, default="not_started"
-    )
-    validation_phase = models.CharField(
+    production_phase = models.CharField(
         max_length=20, choices=PHASE_CHOICES, default="not_started"
     )
 
     # ----- Coordination des déploiements -----
     # Planning board text (pasted by manager/counsellor)
-    coordination_board = models.TextField(blank=True, default='')
+    coordination_board = models.ImageField(
+        upload_to=coordination_board_path, blank=True, null=True
+    )
 
     travaux_a_faire = models.CharField(max_length=255, blank=True)
     responsable_travaux = models.CharField(max_length=255, blank=True)
@@ -223,8 +223,7 @@ class Project(models.Model):
             1
             for s in [
                 self.preparation_phase,
-                self.execution_phase,
-                self.validation_phase,
+                self.production_phase,
             ]
             if s == "completed"
         )

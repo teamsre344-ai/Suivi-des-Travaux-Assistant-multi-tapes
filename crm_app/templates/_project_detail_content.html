@@ -4,7 +4,7 @@
 <div class="card mb-3">
   <div class="card-header d-flex justify-content-between align-items-center">
     <strong>Phases du projet</strong>
-    <small class="text-muted">{{ project.completion_percentage }}% • {{ project.phases_completed }} / 3 phases complétées</small>
+    <small class="text-muted">{{ project.completion_percentage }}% • {{ project.phases_completed }} / 2 phases complétées</small>
   </div>
   <div class="card-body">
 
@@ -17,7 +17,7 @@
     <div class="row g-3">
 
       <!-- Préparation -->
-      <div class="col-md-4">
+      <div class="col-md-6">
         <div class="border rounded p-3 h-100">
           <div class="fw-semibold mb-1">Préparation</div>
           <div class="text-muted small mb-2">{{ project.get_preparation_phase_display|default:"Non démarrée" }}</div>
@@ -42,51 +42,25 @@
         </div>
       </div>
 
-      <!-- Exécution -->
-      <div class="col-md-4">
+      <!-- Production -->
+      <div class="col-md-6">
         <div class="border rounded p-3 h-100">
-          <div class="fw-semibold mb-1">Exécution</div>
-          <div class="text-muted small mb-2">{{ project.get_execution_phase_display|default:"Non démarrée" }}</div>
+          <div class="fw-semibold mb-1">Production</div>
+          <div class="text-muted small mb-2">{{ project.get_production_phase_display|default:"Non démarrée" }}</div>
           <div class="d-flex gap-2">
             <form method="post" action="{% url 'project_phase_update' project.id %}">
               {% csrf_token %}
-              <input type="hidden" name="phase" value="execution">
+              <input type="hidden" name="phase" value="production">
               <button class="btn btn-sm btn-primary" name="set" value="in_progress"
-                      {% if project.preparation_phase != 'completed' or project.execution_phase != 'not_started' %}disabled{% endif %}>
+                      {% if project.preparation_phase != 'completed' or project.production_phase != 'not_started' %}disabled{% endif %}>
                 Démarrer
               </button>
             </form>
             <form method="post" action="{% url 'project_phase_update' project.id %}">
               {% csrf_token %}
-              <input type="hidden" name="phase" value="execution">
+              <input type="hidden" name="phase" value="production">
               <button class="btn btn-sm btn-outline-secondary" name="set" value="completed"
-                      {% if project.execution_phase == 'completed' or project.preparation_phase != 'completed' %}disabled{% endif %}>
-                Terminer
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Validation -->
-      <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-          <div class="fw-semibold mb-1">Validation</div>
-          <div class="text-muted small mb-2">{{ project.get_validation_phase_display|default:"Non démarrée" }}</div>
-          <div class="d-flex gap-2">
-            <form method="post" action="{% url 'project_phase_update' project.id %}">
-              {% csrf_token %}
-              <input type="hidden" name="phase" value="validation">
-              <button class="btn btn-sm btn-primary" name="set" value="in_progress"
-                      {% if project.execution_phase != 'completed' or project.validation_phase != 'not_started' %}disabled{% endif %}>
-                Démarrer
-              </button>
-            </form>
-            <form method="post" action="{% url 'project_phase_update' project.id %}">
-              {% csrf_token %}
-              <input type="hidden" name="phase" value="validation">
-              <button class="btn btn-sm btn-outline-secondary" name="set" value="completed"
-                      {% if project.validation_phase == 'completed' or project.execution_phase != 'completed' %}disabled{% endif %}>
+                      {% if project.production_phase == 'completed' or project.preparation_phase != 'completed' %}disabled{% endif %}>
                 Terminer
               </button>
             </form>
@@ -107,37 +81,14 @@
       <div class="card-header"><strong>Informations</strong></div>
       <div class="card-body">
         <div class="row gy-2">
-          <div class="col-sm-6"><div class="text-muted small">Client</div><div class="fw-semibold">{{ project.client_name }}</div></div>
-          <div class="col-sm-6"><div class="text-muted small">Produit</div><div class="fw-semibold">{{ project.product }}</div></div>
-
-          <div class="col-sm-6"><div class="text-muted small">Environnement</div><div class="fw-semibold">{{ project.get_environment_display }}</div></div>
-          <div class="col-sm-6"><div class="text-muted small">Type</div><div class="fw-semibold">{{ project.get_work_type_display }}</div></div>
-
-          <div class="col-sm-6"><div class="text-muted small">Serveur BD</div><div class="fw-semibold">{{ project.db_server|default:"—" }}</div></div>
-          <div class="col-sm-6"><div class="text-muted small">Serveur App</div><div class="fw-semibold">{{ project.app_server|default:"—" }}</div></div>
-
+          <div class="col-sm-6"><div class="text-muted small">Utilisateur</div><div class="fw-semibold">{{ project.assigned_to|default:"—" }}</div></div>
+          <div class="col-sm-6"><div class="text-muted small">Environnement</div><div class="fw-semibold">{{ project.get_environment_display|default:"—" }}</div></div>
+          <div class="col-sm-6"><div class="text-muted small">Type de travail</div><div class="fw-semibold">{{ project.get_work_type_display|default:"—" }}</div></div>
+          <div class="col-sm-6"><div class="text-muted small">Produit</div><div class="fw-semibold">{{ project.product|default:"—" }}</div></div>
+          <div class="col-sm-6"><div class="text-muted small">Serveur</div><div class="fw-semibold">{{ project.db_server|default:"—" }}</div></div>
+          <div class="col-sm-6"><div class="text-muted small">Application</div><div class="fw-semibold">{{ project.application_name|default:"—" }}</div></div>
+          <div class="col-sm-6"><div class="text-muted small">Serveur d’application</div><div class="fw-semibold">{{ project.app_server|default:"—" }}</div></div>
           <div class="col-sm-6"><div class="text-muted small">Base de données</div><div class="fw-semibold">{{ project.database_name|default:"—" }}</div></div>
-          <div class="col-sm-6">
-            <div class="text-muted small">Validations</div>
-            <div class="d-flex gap-2 align-items-center">
-              <span class="badge {% if project.fuse_validation == 'OK' %}text-bg-success{% else %}text-bg-warning{% endif %}">FUSE {{ project.fuse_validation|default:"NOK" }}</span>
-              <span class="badge {% if project.certificate_validation == 'OK' %}text-bg-success{% else %}text-bg-warning{% endif %}">Cert {{ project.certificate_validation|default:"NOK" }}</span>
-            </div>
-          </div>
-
-          <div class="col-sm-4"><div class="text-muted small">Version actuelle</div><div class="fw-semibold">{{ project.version_actuelle|default:"—" }}</div></div>
-          <div class="col-sm-4"><div class="text-muted small">Version à installer</div><div class="fw-semibold">{{ project.version_cible|default:"—" }}</div></div>
-          <div class="col-sm-4"><div class="text-muted small">Tables M34</div><div class="fw-semibold">{{ project.tables_m34|default:"—" }}</div></div>
-
-          <div class="col-sm-6"><div class="text-muted small">Début</div><div class="fw-semibold">{% if project.start_at %}{{ project.start_at|date:"d/m/Y H:i" }}{% else %}—{% endif %}</div></div>
-          <div class="col-sm-6"><div class="text-muted small">Fin</div><div class="fw-semibold">{% if project.end_at %}{{ project.end_at|date:"d/m/Y H:i" }}{% else %}—{% endif %}</div></div>
-
-          {% if project.versions_matrix %}
-            <div class="col-12">
-              <div class="text-muted small mb-1">Tableau des versions (collé)</div>
-              <pre class="p-3 rounded border bg-light" style="white-space:pre-wrap">{{ project.versions_matrix }}</pre>
-            </div>
-          {% endif %}
         </div>
       </div>
     </div>

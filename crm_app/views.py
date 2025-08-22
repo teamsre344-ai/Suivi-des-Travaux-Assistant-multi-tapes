@@ -854,16 +854,6 @@ def search_view(request):
     return render(request, "search_results.html", ctx)
 
 
-# ------------------ Edit existing project ------------------
-@login_required
-def project_update_view(request, pk):
-    project = get_object_or_404(Project, pk=pk)
-    form = ProjectForm(instance=project)
-    # The new form handles everything client-side, so we just render the page.
-    # We can pass project data to the template if the wizard needs to be pre-filled.
-    return render(request, "project_form.html", {"project": project, "form": form})
-
-
 # ------------------ Create (role-based flow) ------------------
 
 
@@ -881,7 +871,7 @@ def project_form_save_section(request, pk=None):
     else:
         project = None
 
-    form = ProjectForm(request.POST, instance=project)
+    form = ProjectForm(request.POST, request.FILES, instance=project)
 
     if form.is_valid():
         project = form.save(commit=False)
@@ -930,8 +920,9 @@ def project_create_view(request, pk=None):
     else:
         form = ProjectForm(instance=project)
 
+    template_name = "project_form_edit.html" if pk else "project_form.html"
     return render(
-        request, "project_form.html", {"form": form, "technician": tech, "project": project}
+        request, template_name, {"form": form, "technician": tech, "project": project}
     )
 
 
@@ -1018,7 +1009,7 @@ def project_phase_update_view(request, pk):
 
     phase = request.POST.get("phase")
     new_state = request.POST.get("set")  # 'not_started' | 'in_progress' | 'completed'
-    valid_phases = {"preparation", "execution", "validation"}
+    valid_phases = {"preparation", "production"}
     valid_states = {"not_started", "in_progress", "completed"}
 
     if phase not in valid_phases or new_state not in valid_states:
@@ -1026,34 +1017,23 @@ def project_phase_update_view(request, pk):
         return redirect("project_detail", pk=p.pk)
 
     if (
-        phase == "execution"
+        phase == "production"
         and new_state in ("in_progress", "completed")
         and p.preparation_phase != "completed"
     ):
         messages.error(
-            request, "Terminez la préparation avant de démarrer l'exécution."
+            request, "Terminez la préparation avant de démarrer la production."
         )
-        return redirect("project_detail", pk=p.pk)
-    if (
-        phase == "validation"
-        and new_state in ("in_progress", "completed")
-        and p.execution_phase != "completed"
-    ):
-        messages.error(request, "Terminez l'exécution avant de démarrer la validation.")
         return redirect("project_detail", pk=p.pk)
 
     if phase == "preparation":
         p.preparation_phase = new_state
         label = "Préparation"
         display = p.get_preparation_phase_display()
-    elif phase == "execution":
-        p.execution_phase = new_state
-        label = "Exécution"
-        display = p.get_execution_phase_display()
     else:
-        p.validation_phase = new_state
-        label = "Validation"
-        display = p.get_validation_phase_display()
+        p.production_phase = new_state
+        label = "Production"
+        display = p.get_production_phase_display()
 
     try:
         p.save()
