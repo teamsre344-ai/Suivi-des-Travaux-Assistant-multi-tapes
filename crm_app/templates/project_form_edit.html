@@ -55,24 +55,17 @@
 
   <div class="mb-6 border-b border-gray-200">
       <div id="form-menu" class="flex justify-center -mb-px">
-          {% if form.instance.pk %}
-          <div class="menu-item active" data-section="0">Détails du projet</div>
-          {% endif %}
           <div class="menu-item {% if not form.instance.pk %}active{% endif %}" data-section="1">Informations principales et Planification</div>
           <div class="menu-item" data-section="2">Détails Techniques</div>
+          {% if form.instance.pk %}
+          <div class="menu-item" data-section="0">Détails du projet</div>
+          {% endif %}
       </div>
   </div>
 
   <form method="post" enctype="multipart/form-data" novalidate autocomplete="off">
     {% csrf_token %}
     <div id="wizard-form">
-
-      <!-- Section détails du projet -->
-      {% if form.instance.pk %}
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full">
-        {% include "_project_detail_content.html" %}
-      </div>
-      {% endif %}
 
       <!-- Section principale -->
       <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" {% if form.instance.pk %}style="display: none;"{% endif %}>
@@ -179,6 +172,14 @@
           </div>
         </div>
       </div>
+
+      <!-- Section détails du projet -->
+      {% if form.instance.pk %}
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+        {% include "_project_detail_content.html" %}
+      </div>
+      {% endif %}
+
     </div>
 
     <!-- Boutons d'action -->
@@ -202,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function showSection(index) {
         formSections.forEach((section, i) => {
             const sectionElement = section;
-            const dataSection = parseInt(section.getAttribute('data-section-index') || i);
+            const dataSection = parseInt(section.getAttribute('data-section-index'));
             if (dataSection === index) {
                 sectionElement.style.display = 'block';
                 sectionElement.style.opacity = '1';
@@ -234,16 +235,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // Assign data-section-index to each form section for reliable selection
     const hasDetailsSection = {% if form.instance.pk %}true{% else %}false{% endif %};
     if (hasDetailsSection) {
-        formSections[0].setAttribute('data-section-index', '0');
-        formSections[1].setAttribute('data-section-index', '1');
-        formSections[2].setAttribute('data-section-index', '2');
+        formSections[0].setAttribute('data-section-index', '1');
+        formSections[1].setAttribute('data-section-index', '2');
+        formSections[2].setAttribute('data-section-index', '0');
     } else {
         formSections[0].setAttribute('data-section-index', '1');
         formSections[1].setAttribute('data-section-index', '2');
     }
     
     // Initial state
-    showSection({% if form.instance.pk %}0{% else %}1{% endif %});
+    showSection(1);
 
     // Pre-fill form for editing
     {% if form.instance.pk %}

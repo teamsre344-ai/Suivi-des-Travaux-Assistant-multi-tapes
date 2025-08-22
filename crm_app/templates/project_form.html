@@ -205,58 +205,17 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentSectionIndex = 0;
     let project_pk = '{{ form.instance.pk|default:"" }}';
 
-    async function saveSectionData() {
-        const formData = new FormData();
-        const currentSection = formSections[currentSectionIndex];
-        const inputs = currentSection.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            formData.append(input.name, input.value);
-        });
-
-        const url = project_pk ? `/projects/${project_pk}/save_section/` : '/projects/save_section/';
-        
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                if (data.pk && !project_pk) {
-                    project_pk = data.pk;
-                    // A new project was created, so we might need to update the URL
-                    // without a full page reload to make the next "save" operation work.
-                    // We also need to un-hide the "Détails du projet" tab.
-                    const detailsTab = document.querySelector('.menu-item[data-section="2"]');
-                    if (detailsTab) {
-                        detailsTab.style.display = 'block';
-                    }
-                }
-                return true;
-            } else {
-                // Handle and display errors
-                console.error('Validation errors:', data.errors);
-                // You can add code here to display errors to the user
-                alert('There was an error saving the form. Please check the console for details.');
-                return false;
-            }
-        } catch (error) {
-            console.error('Error saving section data:', error);
-            alert('An unexpected error occurred. Please try again.');
-            return false;
-        }
-    }
 
     function updateButtons() {
         backBtn.style.display = currentSectionIndex === 0 ? 'none' : 'inline-block';
         const isLastSection = currentSectionIndex === formSections.length - 1;
         nextBtn.style.display = isLastSection ? 'none' : 'inline-block';
         submitBtn.style.display = isLastSection ? 'inline-block' : 'none';
+
+        if (currentSectionIndex === 1) {
+            submitBtn.style.display = 'inline-block';
+            nextBtn.style.display = 'none';
+        }
     }
 
     function showSection(index) {
@@ -288,13 +247,14 @@ document.addEventListener('DOMContentLoaded', function () {
     menuItems.forEach(item => {
         item.addEventListener('click', () => {
             const sectionIndex = parseInt(item.getAttribute('data-section'));
-            showSection(sectionIndex);
+            if (sectionIndex < currentSectionIndex) {
+                showSection(sectionIndex);
+            }
         });
     });
 
-    nextBtn.addEventListener('click', async () => {
-        const saved = await saveSectionData();
-        if (saved && currentSectionIndex < formSections.length - 1) {
+    nextBtn.addEventListener('click', () => {
+        if (currentSectionIndex < formSections.length - 1) {
             showSection(currentSectionIndex + 1);
         }
     });
