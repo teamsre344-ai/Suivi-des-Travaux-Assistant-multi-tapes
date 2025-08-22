@@ -23,6 +23,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.text import slugify
+from django.urls import reverse
 
 from .forms import (
     LoginForm,
@@ -916,21 +917,25 @@ def project_create_view(request, pk=None):
     if request.method == "POST":
         form = ProjectForm(request.POST, request.FILES, instance=project)
         if form.is_valid():
+            is_new = not form.instance.pk
             project = form.save(commit=False)
             if not project.pk:
                 project.created_by = request.user
                 project.technician = tech
             project.save()
             messages.success(
-                request, f"Projet {'mis à jour' if project.pk else 'créé'} avec succès."
+                request, f"Projet {'mis à jour' if not is_new else 'créé'} avec succès."
             )
+            if is_new:
+                url = reverse('project_update', kwargs={'pk': project.pk})
+                return redirect(f'{url}?section=2')
+            
             return redirect("project_detail", pk=project.pk)
     else:
         form = ProjectForm(instance=project)
 
-    template_name = "project_form_edit.html" if pk else "project_form.html"
     return render(
-        request, template_name, {"form": form, "technician": tech, "project": project}
+        request, "project_form.html", {"form": form, "technician": tech, "project": project}
     )
 
 

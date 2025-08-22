@@ -57,11 +57,11 @@
       <div id="form-menu" class="flex justify-center -mb-px">
           <div class="menu-item active" data-section="0">Informations principales et Planification</div>
           <div class="menu-item" data-section="1">Détails Techniques</div>
-          <div class="menu-item" data-section="2" style="display: {% if form.instance.pk %}block{% else %}none{% endif %};">Détails du projet</div>
+          <div class="menu-item" data-section="2" style="display: {% if form.instance.pk %}flex{% else %}none{% endif %};">Détails du projet</div>
       </div>
   </div>
 
-  <form method="post" enctype="multipart/form-data" novalidate autocomplete="off">
+  <form id="project-form" method="post" enctype="multipart/form-data" novalidate autocomplete="off">
     {% csrf_token %}
     <div id="wizard-form">
 
@@ -201,20 +201,23 @@ document.addEventListener('DOMContentLoaded', function () {
     const backBtn = document.getElementById('back-btn');
     const nextBtn = document.getElementById('next-btn');
     const submitBtn = document.getElementById('submit-btn');
-    const form = document.querySelector('form');
+    const form = document.getElementById('project-form');
     let currentSectionIndex = 0;
-    let project_pk = '{{ form.instance.pk|default:"" }}';
-
+    let projectId = {{ form.instance.pk|default:"null" }};
 
     function updateButtons() {
         backBtn.style.display = currentSectionIndex === 0 ? 'none' : 'inline-block';
-        const isLastSection = currentSectionIndex === formSections.length - 1;
-        nextBtn.style.display = isLastSection ? 'none' : 'inline-block';
-        submitBtn.style.display = isLastSection ? 'inline-block' : 'none';
 
-        if (currentSectionIndex === 1) {
-            submitBtn.style.display = 'inline-block';
+        // The last data entry section is section 1.
+        const isLastDataEntrySection = currentSectionIndex === 1;
+
+        nextBtn.style.display = isLastDataEntrySection ? 'none' : 'inline-block';
+        submitBtn.style.display = isLastDataEntrySection ? 'inline-block' : 'none';
+
+        // For existing projects, if we are on the final read-only section, hide action buttons.
+        if (projectId && currentSectionIndex === 2) {
             nextBtn.style.display = 'none';
+            submitBtn.style.display = 'none';
         }
     }
 
@@ -254,7 +257,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     nextBtn.addEventListener('click', () => {
-        if (currentSectionIndex < formSections.length - 1) {
+        // The "Suivant" button now only navigates from section 0 to 1.
+        if (currentSectionIndex === 0) {
             showSection(currentSectionIndex + 1);
         }
     });
@@ -266,7 +270,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Initial state
-    showSection(0);
+    const urlParams = new URLSearchParams(window.location.search);
+    const sectionParam = urlParams.get('section');
+    let initialSection = 0;
+
+    if (projectId && sectionParam !== null) {
+        const section = parseInt(sectionParam, 10);
+        if (!isNaN(section) && section >= 0 && section < menuItems.length) {
+            initialSection = section;
+        }
+    }
+    
+    showSection(initialSection);
 
     // Pre-fill form for editing
     {% if form.instance.pk %}
@@ -302,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     for (const [key, value] of Object.entries(projectData)) {
         const field = document.querySelector(`[name="${key}"]`);
-        if (field) {
+        if (field && value) {
             if (field.tagName === 'SELECT') {
                 const option = field.querySelector(`option[value="${value}"]`);
                 if (option) {

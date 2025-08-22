@@ -136,7 +136,9 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-AXES_FAILURE_LIMIT = 5
+AXES_FAILURE_LIMIT = 500
+AXES_COOLOFF_TIME = 0
+AXES_RESET_ON_SUCCESS = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
