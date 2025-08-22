@@ -603,7 +603,9 @@ def analytics_view(request):
 
     # Chart 5: Project Specialist Workflow
     specialist_qs = (
-        projects.filter(technician__role__icontains="Spécialiste déploiement")
+        projects.filter(
+            Q(technician__role__icontains="specialiste") | Q(technician__role__icontains="deploiement")
+        )
         .values("technician__user__first_name", "technician__user__last_name")
         .annotate(c=Count("id"))
         .order_by("-c")
