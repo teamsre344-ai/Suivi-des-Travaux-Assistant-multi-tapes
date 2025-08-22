@@ -15,7 +15,7 @@
     tailwind.config = {
       theme: {
         extend: {
-          colors: { brand: '#2563eb', brand2: '#111827' }
+          colors: { brand: '#2563eb', brand2: '#111827', cream: '#FDFDFB' }
         }
       }
     };
@@ -28,16 +28,16 @@
     .badge-green { background:#dcfce7; color:#166534; }
     .badge-blue  { background:#dbeafe; color:#1e40af; }
     .badge-amber { background:#fde68a; color:#92400e; }
-    .kpi-card { background:#fff; padding:1rem; border-radius:.75rem; box-shadow:0 1px 2px rgba(16,24,40,.06); transition:box-shadow .2s ease; }
+    .kpi-card { background:#FDFDFB; padding:1rem; border-radius:.75rem; box-shadow:0 1px 2px rgba(16,24,40,.06); transition:box-shadow .2s ease; }
     .kpi-card:hover { box-shadow:0 6px 14px rgba(16,24,40,.12); }
     .tw-input { width:100%; border:1px solid #e5e7eb; border-radius:.5rem; padding:.5rem .75rem; outline:none; }
     .tw-input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.25); }
   </style>
 </head>
 
-<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
+<body class="bg-cream text-gray-900 flex flex-col min-h-screen">
   <!-- HEADER / NAV -->
-  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
+  <header class="sticky top-0 z-40 bg-cream/90 backdrop-blur border-b">
     <div class="tw-container px-4">
       <!-- On md+ we use 3 columns: Left (brand + nav) / Center (search) / Right (user) -->
       <div class="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 items-center h-16">
@@ -85,7 +85,7 @@
                 name="q"
                 value="{{ request.GET.q|default_if_none:'' }}"
                 placeholder="Rechercher : projet, membre, produit…"
-                class="w-full h-11 pl-11 pr-28 rounded-full border border-gray-200 bg-white/80 hover:bg-white focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition"
+                class="w-full h-11 pl-11 pr-28 rounded-full border border-gray-200 bg-cream/80 hover:bg-cream focus:bg-cream focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition"
                 autocomplete="off" />
               <button type="submit"
                 class="absolute right-1 h-9 px-4 rounded-full bg-indigo-600 text-white font-medium shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition">
@@ -152,7 +152,7 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="border-t bg-white">
+  <footer class="border-t bg-cream">
     <div class="tw-container px-4 py-4 text-sm text-gray-500 flex items-center justify-between">
       <span>&copy; {{ now|date:"Y" }}LGI Healthcare Solutions | LGI Solutions Santé </span>
       <div class="space-x-3">
