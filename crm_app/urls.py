@@ -14,8 +14,8 @@ urlpatterns = [
     path(
         "projects/wizard/save/", views.project_wizard_save, name="project_wizard_save"
     ),
-    path("projects/save_section/", views.project_form_save_section, name="project_form_save_section"),
-    path("projects/<int:pk>/save_section/", views.project_form_save_section, name="project_form_save_section_pk"),
+    path("projects/ajax/save/", views.project_form_save_section, name="project_ajax_save"),
+    path("projects/ajax/save/<int:pk>/", views.project_form_save_section, name="project_ajax_save_pk"),
     path("projects/<int:pk>/", views.project_detail_view, name="project_detail"),
     path("projects/<int:pk>/edit/", views.project_create_view, name="project_update"),
     path("projects/<int:pk>/duplicate/", views.duplicate_project_view, name="project_duplicate"),

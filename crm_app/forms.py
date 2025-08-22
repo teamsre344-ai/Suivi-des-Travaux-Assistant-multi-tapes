@@ -1,5 +1,9 @@
+import json
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.serializers.json import DjangoJSONEncoder
+from django.forms.models import model_to_dict
+from django.db.models.fields.files import FieldFile
 from .models import Project, Technician
 
 User = get_user_model()
@@ -341,6 +345,27 @@ class ProjectForm(forms.ModelForm):
                 "end_at", "La date/heure de fin doit être postérieure au début."
             )
         return data
+
+    @property
+    def instance_data_json(self):
+        if not self.instance or not self.instance.pk:
+            return "{}"
+
+        instance_dict = model_to_dict(self.instance)
+
+        # Handle foreign keys that model_to_dict might not handle as pks
+        if self.instance.assigned_to:
+            instance_dict["assigned_to"] = self.instance.assigned_to.pk
+
+        # Handle any file fields before serializing
+        for field_name, value in instance_dict.items():
+            if isinstance(value, FieldFile):
+                try:
+                    instance_dict[field_name] = value.url if value else None
+                except (ValueError, FileNotFoundError):
+                    instance_dict[field_name] = None
+
+        return json.dumps(instance_dict, cls=DjangoJSONEncoder)
 
 
 # ---------- Checklist JSON upload (used by views) ----------

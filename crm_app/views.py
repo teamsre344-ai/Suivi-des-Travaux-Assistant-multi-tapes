@@ -520,9 +520,25 @@ def home_view(request):
 def analytics_view(request):
     tech = _sync_user_and_technician_from_directory(request.user)
     is_manager = getattr(tech, "is_manager", False)
-    projects = (
-        Project.objects.all() if is_manager else Project.objects.filter(technician=tech)
-    )
+    
+    user_id = request.GET.get('user_id')
+    
+    if is_manager and not user_id:
+        # Manager viewing team-wide analytics
+        projects = Project.objects.all()
+        target_tech = None # No specific tech targeted
+    else:
+        # Non-manager, or manager viewing a specific user
+        target_user = request.user
+        if is_manager and user_id:
+            try:
+                target_user = User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                pass # Fallback to manager's own view
+        
+        target_tech = _sync_user_and_technician_from_directory(target_user)
+        projects = Project.objects.filter(technician=target_tech)
+    
     now = timezone.now()
     last_12m = now - timedelta(days=365)
 

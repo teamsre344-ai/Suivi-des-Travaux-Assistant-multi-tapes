@@ -269,6 +269,44 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    submitBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        const url = projectId ? `/projects/ajax/save/${projectId}/` : '/projects/ajax/save/';
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (!projectId && data.pk) {
+                    // It's a new project, redirect to the detail page
+                    window.location.href = `/projects/${data.pk}/`;
+                } else {
+                    // It's an existing project, show a success message and redirect
+                    alert('Projet mis à jour avec succès!');
+                    window.location.href = `/projects/${projectId}/edit/?section=2`;
+                }
+            } else {
+                // Handle errors
+                let errorMessages = 'Le formulaire contient des erreurs:\n';
+                for (const field in data.errors) {
+                    errorMessages += `${field}: ${data.errors[field].join(', ')}\n`;
+                }
+                alert(errorMessages);
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting form:', error);
+            alert('Une erreur est survenue lors de la soumission du formulaire.');
+        });
+    });
+
     // Initial state
     const urlParams = new URLSearchParams(window.location.search);
     const sectionParam = urlParams.get('section');
@@ -285,50 +323,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Pre-fill form for editing
     {% if form.instance.pk %}
-    const projectData = {
-        project_number: "{{ form.instance.project_number }}",
-        client_name: "{{ form.instance.client_name }}",
-        environment: "{{ form.instance.environment }}",
-        product: "{{ form.instance.product }}",
-        work_type: "{{ form.instance.work_type }}",
-        assigned_to: "{{ form.instance.assigned_to.pk }}",
-        prep_date: "{{ form.instance.prep_date|date:'Y-m-d' }}",
-        prep_start_time: "{{ form.instance.prep_start_time|time:'H:i' }}",
-        prep_end_time: "{{ form.instance.prep_end_time|time:'H:i' }}",
-        prod_date: "{{ form.instance.prod_date|date:'Y-m-d' }}",
-        prod_start_time: "{{ form.instance.prod_start_time|time:'H:i' }}",
-        prod_end_time: "{{ form.instance.prod_end_time|time:'H:i' }}",
-        database_name: "{{ form.instance.database_name }}",
-        db_server: "{{ form.instance.db_server }}",
-        app_server: "{{ form.instance.app_server }}",
-        status: "{{ form.instance.status }}",
-        version_actuelle: "{{ form.instance.version_actuelle }}",
-        version_cible: "{{ form.instance.version_cible }}",
-        sre_name: "{{ form.instance.sre_name }}",
-        sre_phone: "{{ form.instance.sre_phone }}",
-        versions_matrix: "{{ form.instance.versions_matrix|escapejs }}",
-        contact_tech_client_to: "{{ form.instance.contact_tech_client_to|escapejs }}",
-        contact_tech_client_cc: "{{ form.instance.contact_tech_client_cc|escapejs }}",
-        autres_ressources_client_cc: "{{ form.instance.autres_ressources_client_cc|escapejs }}",
-        note_importante: "{{ form.instance.note_importante|escapejs }}",
-        taches_installations: "{{ form.instance.taches_installations|escapejs }}",
-        gestionnaire_projet: "{{ form.instance.gestionnaire_projet }}",
-    };
-
-    for (const [key, value] of Object.entries(projectData)) {
-        const field = document.querySelector(`[name="${key}"]`);
-        if (field && value) {
-            if (field.tagName === 'SELECT') {
-                const option = field.querySelector(`option[value="${value}"]`);
-                if (option) {
-                    option.selected = true;
+    const projectDataElement = document.getElementById('project-data');
+    if (projectDataElement) {
+        try {
+            const projectData = JSON.parse(projectDataElement.textContent);
+            for (const [key, value] of Object.entries(projectData)) {
+                const field = form.querySelector(`[name="${key}"]`);
+                if (field && value !== null && value !== undefined) {
+                    if (field.tagName === 'SELECT') {
+                        const option = Array.from(field.options).find(opt => opt.value == value);
+                        if (option) {
+                            field.value = value;
+                        }
+                    } else {
+                        field.value = value;
+                    }
                 }
-            } else {
-                field.value = value;
             }
+        } catch (e) {
+            console.error("Failed to parse project data JSON:", e);
         }
     }
     {% endif %}
 });
 </script>
+
+{% if form.instance.pk %}
+<script id="project-data" type="application/json">
+    {{ form.instance_data_json|safe }}
+</script>
+{% endif %}
 {% endblock %}
