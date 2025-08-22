@@ -127,23 +127,28 @@
   </header>
 
   <!-- MAIN -->
-  <main class="tw-container px-4 py-6 flex-grow">
-    {% if messages %}
-      <div class="space-y-2 mb-4">
-        {% for m in messages %}
-          <div class="p-3 rounded border
-                      {% if m.level_tag == 'success' %} bg-green-50 text-green-700 border-green-200
-                      {% elif m.level_tag == 'warning' %} bg-amber-50 text-amber-800 border-amber-200
-                      {% elif m.level_tag == 'error' %} bg-red-50 text-red-700 border-red-200
-                      {% else %} bg-blue-50 text-blue-800 border-blue-200
-                      {% endif %}">
-            {{ m }}
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
+  <main class="flex-grow">
+    {% block container %}
+      <div class="tw-container px-4 py-6">
+    {% endblock container %}
 
-    {% block content %}{% endblock %}
+      {% if messages %}
+        <div class="space-y-2 mb-4">
+          {% for m in messages %}
+            <div class="p-3 rounded border
+                        {% if m.level_tag == 'success' %} bg-green-50 text-green-700 border-green-200
+                        {% elif m.level_tag == 'warning' %} bg-amber-50 text-amber-800 border-amber-200
+                        {% elif m.level_tag == 'error' %} bg-red-50 text-red-700 border-red-200
+                        {% else %} bg-blue-50 text-blue-800 border-blue-200
+                        {% endif %}">
+              {{ m }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </div>
   </main>
 
   <!-- FOOTER -->

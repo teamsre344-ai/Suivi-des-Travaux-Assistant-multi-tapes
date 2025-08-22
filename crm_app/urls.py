@@ -14,9 +14,7 @@ urlpatterns = [
     path('projects/new/', views.project_create_view, name='project_create'),
     path('projects/wizard/save/', views.project_wizard_save, name='project_wizard_save'),
     path('projects/<int:pk>/', views.project_detail_view, name='project_detail'),
-
-    # ✅ NEW: edit page
-    path('projects/<int:pk>/edit/', views.project_update_view, name='project_update'),
+    path('projects/<int:pk>/edit/', views.project_create_view, name='project_update'),
 
     path('projects/<int:pk>/phase/', views.project_phase_update_view, name='project_phase_update'),
     path('projects/<int:pk>/checklist/import/', views.checklist_import_view, name='checklist_import'),

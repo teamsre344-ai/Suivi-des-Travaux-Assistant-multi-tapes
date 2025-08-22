@@ -69,6 +69,14 @@ class CoordinationDeploymentForm(forms.Form):
         help_text="Sélectionnez le nom du client existant"
     )
 
+    product = forms.ChoiceField(
+        label="Produit",
+        required=True,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        choices=[],
+        help_text="Sélectionnez le produit"
+    )
+
     # Préparation
     prep_date = forms.DateField(
         label="Date de préparation",
@@ -103,6 +111,13 @@ class CoordinationDeploymentForm(forms.Form):
         widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"})
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        client_names = Project.objects.values_list('client_name', flat=True).distinct().order_by('client_name')
+        self.fields['client_name'].choices = [("", "---------")] + [(name, name) for name in client_names]
+        product_names = Project.objects.values_list('product', flat=True).distinct().order_by('product')
+        self.fields['product'].choices = [("", "---------")] + [(name, name) for name in product_names]
+
 
 # ---------- Project form (existing) ----------
 class ProjectForm(forms.ModelForm):
@@ -113,24 +128,15 @@ class ProjectForm(forms.ModelForm):
         help_text="Choisir la personne qui travaillera sur ce projet"
     )
 
-    # Native datetime pickers (HTML5)
-    start_at = forms.DateTimeField(
-        label="Date et heure de début",
+    prep_date = forms.DateField(
+        label="Date de préparation",
         required=False,
-        input_formats=['%Y-%m-%dT%H:%M'],
-        widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
-            'class': 'form-control shadow-sm',
-        })
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"})
     )
-    end_at = forms.DateTimeField(
-        label="Date et heure de fin",
+    prod_date = forms.DateField(
+        label="Date de production",
         required=False,
-        input_formats=['%Y-%m-%dT%H:%M'],
-        widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
-            'class': 'form-control shadow-sm',
-        })
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"})
     )
 
     class Meta:
@@ -143,9 +149,6 @@ class ProjectForm(forms.ModelForm):
             'project_number', 'environment', 'client_name', 'product', 'work_type',
             'database_name', 'db_server', 'app_server', 'fuse_validation', 'certificate_validation',
             'status', 'sre_name', 'sre_phone',
-
-            # NEW date+time fields
-            'start_at', 'end_at',
 
             'travaux_a_faire', 'responsable_travaux',
             'version_actuelle', 'version_cible', 'tables_m34',
@@ -182,6 +185,20 @@ class ProjectForm(forms.ModelForm):
         instance = kwargs.get('instance')
         super().__init__(*args, **kwargs)
 
+        # Get client names from the database
+        client_names = Project.objects.values_list('client_name', flat=True).distinct().order_by('client_name')
+        self.fields['client_name'] = forms.ChoiceField(
+            choices=[("", "---------")] + [(name, name) for name in client_names],
+            widget=forms.Select(attrs={'class': 'form-select'})
+        )
+
+        # Get product names from the database
+        product_names = Project.objects.values_list('product', flat=True).distinct().order_by('product')
+        self.fields['product'] = forms.ChoiceField(
+            choices=[("", "---------")] + [(name, name) for name in product_names],
+            widget=forms.Select(attrs={'class': 'form-select'})
+        )
+
         # Apply Tailwind CSS classes consistently
         for name, field in self.fields.items():
             w = field.widget
@@ -190,20 +207,11 @@ class ProjectForm(forms.ModelForm):
             # We remove Bootstrap classes and add the Tailwind one.
             current_classes = w.attrs.get("class", "")
             current_classes = current_classes.replace("form-control", "").replace("form-select", "")
-            w.attrs["class"] = f"tw-input {current_classes}".strip()
+            w.attrs["class"] = f"tw-input w-full {current_classes}".strip()
 
             # Add placeholder if not already set, but avoid for certain input types
             if not isinstance(w, (forms.CheckboxInput, forms.RadioSelect, forms.FileInput, forms.ClearableFileInput)):
                 w.attrs.setdefault("placeholder", field.label)
-
-        # Prefill datetime-local for editing
-        if instance and instance.pk:
-            for fname in ("start_at", "end_at"):
-                if fname in self.fields:
-                    dt = getattr(instance, fname, None)
-                    if dt:
-                        dt_local = timezone.localtime(dt) if timezone.is_aware(dt) else dt
-                        self.fields[fname].widget.attrs['value'] = dt_local.strftime('%Y-%m-%dT%H:%M')
 
     def clean(self):
         data = super().clean()

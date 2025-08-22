@@ -658,28 +658,34 @@ def _is_planner_or_manager(user) -> bool:
     return bool(getattr(tech, "is_manager", False) or "planification" in role)
 
 @login_required
-def project_create_view(request):
+def project_create_view(request, pk=None):
     """
     This view now simply renders the wizard form.
     The form is self-contained and will post data to the new save view.
     """
     tech = _sync_user_and_technician_from_directory(request.user)
+    
+    if pk:
+        project = get_object_or_404(Project, pk=pk)
+    else:
+        project = None
 
     # Role-based redirection
-    if _is_planner_or_manager_from_tech(tech):
+    if _is_planner_or_manager_from_tech(tech) and not project:
         return redirect('coordination_form')
 
     if request.method == 'POST':
-        form = ProjectForm(request.POST, request.FILES)
+        form = ProjectForm(request.POST, request.FILES, instance=project)
         if form.is_valid():
             project = form.save(commit=False)
-            project.created_by = request.user
-            project.technician = tech
+            if not project.pk:
+                project.created_by = request.user
+                project.technician = tech
             project.save()
-            messages.success(request, "Projet créé avec succès.")
+            messages.success(request, f"Projet {'mis à jour' if project.pk else 'créé'} avec succès.")
             return redirect('project_detail', pk=project.pk)
     else:
-        form = ProjectForm()
+        form = ProjectForm(instance=project)
 
     return render(request, 'project_form.html', {'form': form, 'technician': tech})
 

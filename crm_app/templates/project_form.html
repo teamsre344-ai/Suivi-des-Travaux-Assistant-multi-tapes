@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block container %}
+  <div class="w-full max-w-6xl mx-auto px-4 py-6">
+{% endblock container %}
+
 {% block title %}
   {% if form.instance.pk %}
     Modifier le projet : {{ form.instance.project_number }}
@@ -9,7 +13,6 @@
 {% endblock %}
 
 {% block content %}
-<div class="container my-4">
   <h1 class="mb-6 text-3xl font-extrabold text-gray-800 tracking-tight">
     {% if form.instance.pk %}
       Modifier le Projet
@@ -36,8 +39,8 @@
     <div id="wizard-form" class="space-y-8">
 
       <!-- Section principale -->
-      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border">
-        <legend class="text-lg font-semibold text-gray-900 mb-4">Informations principales et Planification</legend>
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full">
+        <div class="text-lg font-semibold text-gray-900 mb-4">Informations principales et Planification</div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
             <label for="{{ form.project_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Numéro de projet</label>
@@ -102,85 +105,109 @@
                 </div>
             </div>
         </div>
-      </fieldset>
+      </div>
 
       <!-- Section technique -->
-      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
-        <legend class="text-lg font-semibold text-gray-900 mb-4">Détails Techniques</legend>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+        <div class="text-lg font-semibold text-gray-900 mb-4">Détails Techniques</div>
+        <div class="flex flex-wrap -mx-3">
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.database_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom de la base de données</label>
             {{ form.database_name }}
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.db_server.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Serveur de BD</label>
             {{ form.db_server }}
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.app_server.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Serveur applicatif</label>
             {{ form.app_server }}
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
             {{ form.status }}
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.version_actuelle.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Version actuelle</label>
             {{ form.version_actuelle }}
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.version_cible.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Version cible</label>
             {{ form.version_cible }}
           </div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
+            <label for="{{ form.fuse_validation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Validation Fuse</label>
+            {{ form.fuse_validation }}
+          </div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
+            <label for="{{ form.certificate_validation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Validation Certificat</label>
+            {{ form.certificate_validation }}
+          </div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
+            <label for="{{ form.tables_m34.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tables M34</label>
+            {{ form.tables_m34 }}
+          </div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
+            <label for="{{ form.travaux_a_faire.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Travaux à faire</label>
+            {{ form.travaux_a_faire }}
+          </div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
+            <label for="{{ form.responsable_travaux.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Responsable des travaux</label>
+            {{ form.responsable_travaux }}
+          </div>
         </div>
-      </fieldset>
+      </div>
 
       <!-- Section SRE -->
-      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
-        <legend class="text-lg font-semibold text-gray-900 mb-4">Contact SRE</legend>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+        <div class="text-lg font-semibold text-gray-900 mb-4">Contact SRE</div>
+        <div class="flex flex-wrap -mx-3">
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.sre_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom SRE</label>
             {{ form.sre_name }}
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.sre_phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Téléphone SRE</label>
             {{ form.sre_phone }}
           </div>
         </div>
-      </fieldset>
+      </div>
 
       <!-- Section Matrice des versions -->
-      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
-        <legend class="text-lg font-semibold text-gray-900 mb-4">Matrice des versions</legend>
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+        <div class="text-lg font-semibold text-gray-900 mb-4">Matrice des versions</div>
         <div>
           <label for="{{ form.versions_matrix.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Matrice des versions</label>
           {{ form.versions_matrix }}
         </div>
-      </fieldset>
+      </div>
       
       <!-- Section Communications -->
-      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
-        <legend class="text-lg font-semibold text-gray-900 mb-4">Communications Client</legend>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+        <div class="text-lg font-semibold text-gray-900 mb-4">Communications Client</div>
+        <div class="flex flex-wrap -mx-3">
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.contact_tech_client_to.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Contact technique (À)</label>
             {{ form.contact_tech_client_to }}
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.contact_tech_client_cc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Contact technique (Cc)</label>
             {{ form.contact_tech_client_cc }}
           </div>
-          <div class="md:col-span-2">
+          <div class="w-full px-3 mb-6">
             <label for="{{ form.autres_ressources_client_cc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Autres ressources (Cc)</label>
             {{ form.autres_ressources_client_cc }}
           </div>
+          <div class="w-full px-3 mb-6">
+            <label for="{{ form.courriel_confirmation_client.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Courriel confirmation client</label>
+            {{ form.courriel_confirmation_client }}
+          </div>
         </div>
-      </fieldset>
+      </div>
 
       <!-- Autres détails -->
-      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
-        <legend class="text-lg font-semibold text-gray-900 mb-4">Autres détails</legend>
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+        <div class="text-lg font-semibold text-gray-900 mb-4">Autres détails</div>
         <div class="space-y-6">
           <div>
             <label for="{{ form.note_importante.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Note importante</label>
@@ -194,17 +221,33 @@
             <label for="{{ form.gestionnaire_projet.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Gestionnaire de projet</label>
             {{ form.gestionnaire_projet }}
           </div>
+          <div>
+            <label for="{{ form.equipe_dev_ajouter.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Équipe dev à ajouter</label>
+            {{ form.equipe_dev_ajouter }}
+          </div>
+          <div>
+            <label for="{{ form.equipe_integration_ajouter.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Équipe intégration à ajouter</label>
+            {{ form.equipe_integration_ajouter }}
+          </div>
+          <div>
+            <label for="{{ form.bi_a_valider.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">BI à valider</label>
+            {{ form.bi_a_valider }}
+          </div>
+          <div>
+            <label for="{{ form.autres_produits_verifier.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Autres produits à vérifier</label>
+            {{ form.autres_produits_verifier }}
+          </div>
         </div>
-      </fieldset>
+      </div>
       
       <!-- Fichiers -->
-      <fieldset class="form-section bg-white p-6 rounded-xl shadow-sm border" style="display: none;">
-        <legend class="text-lg font-semibold text-gray-900 mb-4">Fichiers</legend>
+      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+        <div class="text-lg font-semibold text-gray-900 mb-4">Fichiers</div>
         <div>
           <label for="{{ form.coordination_board.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tableau de coordination</label>
           {{ form.coordination_board }}
         </div>
-      </fieldset>
+      </div>
 
     </div>
 
@@ -222,7 +265,6 @@
       </button>
     </div>
   </form>
-</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -270,6 +312,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initial state
     showSection(0);
+
+    // Pre-fill form for editing
+    {% if form.instance.pk %}
+    const projectData = {
+        project_number: "{{ form.instance.project_number }}",
+        client_name: "{{ form.instance.client_name }}",
+        environment: "{{ form.instance.environment }}",
+        product: "{{ form.instance.product }}",
+        work_type: "{{ form.instance.work_type }}",
+        assigned_to: "{{ form.instance.assigned_to.pk }}",
+        prep_date: "{{ form.instance.prep_date|date:'Y-m-d' }}",
+        prep_start_time: "{{ form.instance.prep_start_time|time:'H:i' }}",
+        prep_end_time: "{{ form.instance.prep_end_time|time:'H:i' }}",
+        prod_date: "{{ form.instance.prod_date|date:'Y-m-d' }}",
+        prod_start_time: "{{ form.instance.prod_start_time|time:'H:i' }}",
+        prod_end_time: "{{ form.instance.prod_end_time|time:'H:i' }}",
+        database_name: "{{ form.instance.database_name }}",
+        db_server: "{{ form.instance.db_server }}",
+        app_server: "{{ form.instance.app_server }}",
+        status: "{{ form.instance.status }}",
+        version_actuelle: "{{ form.instance.version_actuelle }}",
+        version_cible: "{{ form.instance.version_cible }}",
+        sre_name: "{{ form.instance.sre_name }}",
+        sre_phone: "{{ form.instance.sre_phone }}",
+        versions_matrix: "{{ form.instance.versions_matrix|escapejs }}",
+        contact_tech_client_to: "{{ form.instance.contact_tech_client_to|escapejs }}",
+        contact_tech_client_cc: "{{ form.instance.contact_tech_client_cc|escapejs }}",
+        autres_ressources_client_cc: "{{ form.instance.autres_ressources_client_cc|escapejs }}",
+        note_importante: "{{ form.instance.note_importante|escapejs }}",
+        taches_installations: "{{ form.instance.taches_installations|escapejs }}",
+        gestionnaire_projet: "{{ form.instance.gestionnaire_projet }}",
+    };
+
+    for (const [key, value] of Object.entries(projectData)) {
+        const field = document.querySelector(`[name="${key}"]`);
+        if (field) {
+            if (field.tagName === 'SELECT') {
+                const option = field.querySelector(`option[value="${value}"]`);
+                if (option) {
+                    option.selected = true;
+                }
+            } else {
+                field.value = value;
+            }
+        }
+    }
+    {% endif %}
 });
 </script>
 {% endblock %}
