@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import model_to_dict
 from django.db.models.fields.files import FieldFile
-from .models import Project, Technician
+from .models import Project, Technician, TimelineEntry
 
 User = get_user_model()
 
@@ -39,14 +39,14 @@ class CoordinationDeploymentForm(forms.ModelForm):
         label="Numéro de projet",
         max_length=50,
         widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "PRJXXXX"}
+            attrs={"placeholder": "PRJXXXX", "class": "input"}
         ),
     )
 
     technician = forms.ModelChoiceField(
         label="Spécialiste déploiement assigné",
         queryset=Technician.get_deployment_specialists(),
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.Select(attrs={"class": "select"}),
         help_text="Sélectionnez le spécialiste qui exécutera le déploiement",
     )
 
@@ -60,7 +60,7 @@ class CoordinationDeploymentForm(forms.ModelForm):
             ("Dounia EIBaine", "Dounia EIBaine"),
         ],
         required=False,
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.Select(attrs={"class": "select"}),
         help_text="Sélectionnez le gestionnaire de projet",
     )
 
@@ -68,14 +68,14 @@ class CoordinationDeploymentForm(forms.ModelForm):
         label="Le Tableau de Coordination des Travaux (copier-coller)",
         required=False,
         widget=forms.Textarea(
-            attrs={"class": "form-control", "rows": 10}
+            attrs={"rows": 10}
         ),
     )
 
     client_name = forms.ChoiceField(
         label="Nom du client",
         required=True,
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.Select(attrs={"class": "select"}),
         choices=[],
         help_text="Sélectionnez le nom du client existant",
     )
@@ -83,7 +83,7 @@ class CoordinationDeploymentForm(forms.ModelForm):
     product = forms.ChoiceField(
         label="Produit",
         required=True,
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.Select(attrs={"class": "select"}),
         choices=[],
         help_text="Sélectionnez le produit",
     )
@@ -92,7 +92,7 @@ class CoordinationDeploymentForm(forms.ModelForm):
         label="Type de Travaux",
         choices=Project.WORK_TYPE_CHOICES,
         required=True,
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.Select(attrs={"class": "select"}),
         help_text="Sélectionnez le type de travaux",
     )
 
@@ -100,34 +100,34 @@ class CoordinationDeploymentForm(forms.ModelForm):
     prep_date = forms.DateField(
         label="Date de préparation",
         required=False,
-        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+        widget=forms.DateInput(attrs={"type": "date", "class": "input"}),
     )
     prep_start_time = forms.TimeField(
         label="Heure début (préparation)",
         required=False,
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+        widget=forms.TimeInput(attrs={"type": "time", "class": "input"}),
     )
     prep_end_time = forms.TimeField(
         label="Heure fin (préparation)",
         required=False,
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+        widget=forms.TimeInput(attrs={"type": "time", "class": "input"}),
     )
 
     # Production
     prod_date = forms.DateField(
         label="Date de production",
         required=False,
-        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+        widget=forms.DateInput(attrs={"type": "date", "class": "input"}),
     )
     prod_start_time = forms.TimeField(
         label="Heure début (production)",
         required=False,
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+        widget=forms.TimeInput(attrs={"type": "time", "class": "input"}),
     )
     prod_end_time = forms.TimeField(
         label="Heure fin (production)",
         required=False,
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+        widget=forms.TimeInput(attrs={"type": "time", "class": "input"}),
     )
 
     class Meta:
@@ -510,3 +510,13 @@ class ChecklistItemUpdateForm(forms.Form):
             attrs={"multiple": True, "accept": "image/*", "class": "form-control"}
         ),
     )
+
+
+class TimelineEntryForm(forms.ModelForm):
+    class Meta:
+        model = TimelineEntry
+        fields = ['event_label', 'event_time']
+        widgets = {
+            'event_label': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Action taken'}),
+            'event_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+        }

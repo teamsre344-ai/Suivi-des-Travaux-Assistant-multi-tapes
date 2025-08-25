@@ -21,53 +21,55 @@
     };
   </script>
 
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=5" />
+
   <!-- Small utility CSS (no @apply so it works with CDN) -->
   <style>
-    .tw-container { max-width: 1200px; margin: 0 auto; }
+    .tw-container {
+      width: 100%;
+      padding-inline: clamp(12px, 2.5vw, 32px);
+    }
     .badge { display:inline-flex; align-items:center; font-size:.75rem; line-height:1; padding:.25rem .5rem; border-radius:9999px; }
     .badge-green { background:#dcfce7; color:#166534; }
     .badge-blue  { background:#dbeafe; color:#1e40af; }
     .badge-amber { background:#fde68a; color:#92400e; }
-    .kpi-card { background:#FDFDFB; padding:1rem; border-radius:.75rem; box-shadow:0 1px 2px rgba(16,24,40,.06); transition:box-shadow .2s ease; }
-    .kpi-card:hover { box-shadow:0 6px 14px rgba(16,24,40,.12); }
     .tw-input { width:100%; border:1px solid #e5e7eb; border-radius:.5rem; padding:.5rem .75rem; outline:none; }
     .tw-input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.25); }
   </style>
 </head>
 
-<body class="bg-cream text-gray-900 flex flex-col min-h-screen">
+<body class="radial-background flex flex-col min-h-screen">
   <!-- HEADER / NAV -->
-  <header class="sticky top-0 z-40 bg-cream/90 backdrop-blur border-b">
-    <div class="tw-container px-4">
-      <!-- On md+ we use 3 columns: Left (brand + nav) / Center (search) / Right (user) -->
-      <div class="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 items-center h-16">
+  <header class="sticky top-0 z-40">
+    <div class="tw-container px-6">
+      <div class="flex items-center justify-between h-20">
 
         <!-- LEFT: Brand + Primary Nav -->
         <div class="flex items-center gap-8">
           <!-- Brand -->
           <a href="{% url 'home' %}" class="flex items-center gap-3 shrink-0">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-500 text-white shadow-sm">
-              <i class="fa-solid fa-chart-simple text-lg"></i>
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg">
+              <i class="fa-solid fa-chart-simple text-xl"></i>
             </span>
-            <span class="text-xl font-semibold tracking-tight">SRE Track</span>
+            <span class="text-2xl font-bold tracking-tight text-gray-800">SRE Track</span>
           </a>
 
           <!-- Nav -->
           {% with url_name=request.resolver_match.url_name %}
-          <nav class="hidden md:flex items-center gap-6 text-[15px]">
+          <nav class="hidden md:flex items-center gap-8 text-lg">
             <a href="{% url 'home' %}"
-               class="transition hover:text-indigo-600 {% if url_name == 'home' %}text-indigo-600 font-semibold{% else %}text-gray-900{% endif %}">
+               class="transition hover:text-blue-600 {% if url_name == 'home' %}text-blue-600 font-semibold{% else %}text-gray-700{% endif %}">
               Tableau de bord
             </a>
 
             <a href="{% url 'project_list' %}"
-               class="transition hover:text-indigo-600 {% if url_name == 'project_list' %}text-indigo-600 font-semibold{% else %}text-gray-900{% endif %}">
+               class="transition hover:text-blue-600 {% if url_name == 'project_list' %}text-blue-600 font-semibold{% else %}text-gray-700{% endif %}">
               Projets
             </a>
 
             {% if technician and technician.is_manager %}
             <a href="{% url 'team_dashboard' %}"
-               class="transition hover:text-indigo-600 {% if url_name == 'team_dashboard' %}text-indigo-600 font-semibold{% else %}text-gray-900{% endif %}">
+               class="transition hover:text-blue-600 {% if url_name == 'team_dashboard' %}text-blue-600 font-semibold{% else %}text-gray-700{% endif %}">
               Équipe
             </a>
             {% endif %}
@@ -76,35 +78,31 @@
         </div>
 
         <!-- CENTER: Global Search -->
-        <div class="flex md:justify-center">
-          <form action="{% url 'search' %}" method="get" class="w-full md:max-w-xl">
-            <div class="relative flex items-center">
-              <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-400"></i>
-              <input
-                type="text"
-                name="q"
-                value="{{ request.GET.q|default_if_none:'' }}"
-                placeholder="Rechercher : projet, membre, produit…"
-                class="w-full h-11 pl-11 pr-28 rounded-full border border-gray-200 bg-cream/80 hover:bg-cream focus:bg-cream focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition"
-                autocomplete="off" />
-              <button type="submit"
-                class="absolute right-1 h-9 px-4 rounded-full bg-indigo-600 text-white font-medium shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition">
-                Chercher
-              </button>
-            </div>
-          </form>
+        <div class="flex-grow flex items-center justify-center px-8">
+            <form action="{% url 'search' %}" method="get" class="w-full max-w-md">
+                <div class="relative flex items-center">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-400"></i>
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ request.GET.q|default_if_none:'' }}"
+                        placeholder="Rechercher : projet, membre, produit…"
+                        class="w-full h-12 pl-11 pr-4 rounded-full border border-gray-200 bg-gray-50 hover:bg-white focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition"
+                        autocomplete="off" />
+                </div>
+            </form>
         </div>
 
         <!-- RIGHT: Profile chip (no name) + Logout -->
-        <div class="flex items-center justify-between md:justify-end gap-3">
+        <div class="flex items-center justify-end gap-4">
 
           <!-- Profile chip (click to open /profile/) -->
           <a href="{% url 'profile' %}"
-             class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 transition"
+             class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition text-lg"
              title="Mon profil" aria-label="Mon profil">
             {% if technician and technician.avatar_url %}
               <img src="{{ technician.avatar_url }}" alt="avatar"
-                   class="h-10 w-10 rounded-full object-cover" />
+                   class="h-12 w-12 rounded-full object-cover" />
             {% else %}
               {% if request.user.first_name or request.user.last_name %}
                 {{ request.user.first_name|slice:":1" }}{{ request.user.last_name|slice:":1" }}
@@ -116,9 +114,9 @@
 
           <!-- Logout -->
           <a href="{% url 'logout' %}"
-             class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
+             class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
              title="Se déconnecter" aria-label="Se déconnecter">
-            <i class="fa-solid fa-right-from-bracket"></i>
+            <i class="fa-solid fa-right-from-bracket text-lg"></i>
           </a>
         </div>
 
@@ -128,10 +126,7 @@
 
   <!-- MAIN -->
   <main class="flex-grow">
-    {% block container %}
-      <div class="tw-container px-4 py-6">
-    {% endblock container %}
-
+    <div class="tw-container py-10">
       {% if messages %}
         <div class="space-y-2 mb-4">
           {% for m in messages %}
@@ -152,7 +147,7 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="border-t bg-cream">
+  <footer>
     <div class="tw-container px-4 py-4 text-sm text-gray-500 flex items-center justify-between">
       <span>&copy; {{ now|date:"Y" }}LGI Healthcare Solutions | LGI Solutions Santé </span>
       <div class="space-x-3">

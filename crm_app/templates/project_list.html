@@ -44,7 +44,7 @@
 </div>
 
 <!-- Filter bar -->
-<form method="get" class="bg-white rounded-2xl border shadow-sm p-4 mb-6 space-y-4">
+<form method="get" class="radial-background rounded-2xl border shadow-sm p-4 mb-6 space-y-4">
   <!-- First row -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
     <!-- Search -->
@@ -149,11 +149,11 @@
 </form>
 
 <!-- Table -->
-<div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+<div class="radial-background rounded-2xl shadow-sm border overflow-hidden">
   <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
-        <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+        <tr class="elevated-table-header text-left text-xs font-semibold text-gray-600 uppercase tracking-wider radial-background">
           <th class="px-4 py-2">Numéro</th>
           <th class="px-4 py-2">Client</th>
           <th class="px-4 py-2">Produit</th>
@@ -227,7 +227,7 @@
   </div>
 
   <!-- Pagination -->
-  <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-t">
+  <div class="pagination-container flex items-center justify-between px-4 py-3 border-t radial-background">
     <div class="text-sm text-gray-600">
       {% if page_obj.paginator.count %}
         Affichage

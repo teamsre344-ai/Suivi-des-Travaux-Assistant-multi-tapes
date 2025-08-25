@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Checklist for Confluence</title>
+</head>
+<body>
+    <h1>{{ project.title }}</h1>
+    <ul>
+        {% for item in items %}
+            <li>[ ] {{ item.label }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

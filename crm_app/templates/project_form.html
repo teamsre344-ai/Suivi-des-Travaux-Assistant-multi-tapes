@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load form_extras %}
 
 {% block container %}
   <div class="w-full max-w-6xl mx-auto px-4 py-6">
@@ -66,31 +67,31 @@
     <div id="wizard-form">
 
       <!-- Section principale -->
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full">
+      <div class="form-section radial-background p-6 rounded-xl shadow-sm border w-full">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
             <label for="{{ form.project_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Numéro de projet</label>
-            {{ form.project_number }}
+            {% if is_manager %}{{ form.project_number|add_attr:"disabled:disabled" }}{% else %}{{ form.project_number }}{% endif %}
           </div>
           <div>
             <label for="{{ form.client_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom du client</label>
-            {{ form.client_name }}
+            {% if is_manager %}{{ form.client_name|add_attr:"disabled:disabled" }}{% else %}{{ form.client_name }}{% endif %}
           </div>
           <div>
             <label for="{{ form.environment.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Environnement</label>
-            {{ form.environment }}
+            {% if is_manager %}{{ form.environment|add_attr:"disabled:disabled" }}{% else %}{{ form.environment }}{% endif %}
           </div>
           <div>
             <label for="{{ form.product.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Produit</label>
-            {{ form.product }}
+            {% if is_manager %}{{ form.product|add_attr:"disabled:disabled" }}{% else %}{{ form.product }}{% endif %}
           </div>
           <div>
             <label for="{{ form.work_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Type de travaux</label>
-            {{ form.work_type }}
+            {% if is_manager %}{{ form.work_type|add_attr:"disabled:disabled" }}{% else %}{{ form.work_type }}{% endif %}
           </div>
           <div>
             <label for="{{ form.assigned_to.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Assigné à</label>
-            {{ form.assigned_to }}
+            {% if is_manager %}{{ form.assigned_to|add_attr:"disabled:disabled" }}{% else %}{{ form.assigned_to }}{% endif %}
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-6">
@@ -100,33 +101,33 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label for="{{ form.prep_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                      {{ form.prep_date }}
+                      {% if is_manager %}{{ form.prep_date|add_attr:"disabled:disabled" }}{% else %}{{ form.prep_date }}{% endif %}
                     </div>
                     <div>
                       <label for="{{ form.prep_start_time.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Début</label>
-                      {{ form.prep_start_time }}
+                      {% if is_manager %}{{ form.prep_start_time|add_attr:"disabled:disabled" }}{% else %}{{ form.prep_start_time }}{% endif %}
                     </div>
                     <div>
                       <label for="{{ form.prep_end_time.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Fin</label>
-                      {{ form.prep_end_time }}
+                      {% if is_manager %}{{ form.prep_end_time|add_attr:"disabled:disabled" }}{% else %}{{ form.prep_end_time }}{% endif %}
                     </div>
                 </div>
             </div>
             <!-- Production -->
-            <div class="space-y-4 p-4 rounded-lg bg-green-50 border border-green-200">
+            <div class="space-y-4 p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-200 border border-green-200">
                 <h3 class="text-lg font-bold text-green-800">Production</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label for="{{ form.prod_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                      {{ form.prod_date }}
+                      {% if is_manager %}{{ form.prod_date|add_attr:"disabled:disabled" }}{% else %}{{ form.prod_date }}{% endif %}
                     </div>
                     <div>
                       <label for="{{ form.prod_start_time.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Début</label>
-                      {{ form.prod_start_time }}
+                      {% if is_manager %}{{ form.prod_start_time|add_attr:"disabled:disabled" }}{% else %}{{ form.prod_start_time }}{% endif %}
                     </div>
                     <div>
                       <label for="{{ form.prod_end_time.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Fin</label>
-                      {{ form.prod_end_time }}
+                      {% if is_manager %}{{ form.prod_end_time|add_attr:"disabled:disabled" }}{% else %}{{ form.prod_end_time }}{% endif %}
                     </div>
                 </div>
             </div>
@@ -134,56 +135,60 @@
       </div>
 
       <!-- Section technique -->
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+      <div class="form-section radial-background p-6 rounded-xl shadow-sm border w-full" style="display: none;">
         <div class="flex flex-wrap -mx-3">
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.database_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom de la base de données</label>
-            {{ form.database_name }}
+            {% if is_manager %}{{ form.database_name|add_attr:"disabled:disabled" }}{% else %}{{ form.database_name }}{% endif %}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.db_server.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Serveur de BD</label>
-            {{ form.db_server }}
+            {% if is_manager %}{{ form.db_server|add_attr:"disabled:disabled" }}{% else %}{{ form.db_server }}{% endif %}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.app_server.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Serveur applicatif</label>
-            {{ form.app_server }}
+            {% if is_manager %}{{ form.app_server|add_attr:"disabled:disabled" }}{% else %}{{ form.app_server }}{% endif %}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.version_actuelle.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Version actuelle</label>
-            {{ form.version_actuelle }}
+            {% if is_manager %}{{ form.version_actuelle|add_attr:"disabled:disabled" }}{% else %}{{ form.version_actuelle }}{% endif %}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.version_cible.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Version cible</label>
-            {{ form.version_cible }}
+            {% if is_manager %}{{ form.version_cible|add_attr:"disabled:disabled" }}{% else %}{{ form.version_cible }}{% endif %}
           </div>
           <div class="w-full px-3 mb-6">
             <label for="{{ form.versions_matrix.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Matrice des versions</label>
-            {{ form.versions_matrix }}
+            {% if is_manager %}{{ form.versions_matrix|add_attr:"disabled:disabled" }}{% else %}{{ form.versions_matrix }}{% endif %}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.fuse_validation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Validation Fuse</label>
-            {{ form.fuse_validation }}
+            {% if is_manager %}{{ form.fuse_validation|add_attr:"disabled:disabled" }}{% else %}{{ form.fuse_validation }}{% endif %}
           </div>
           <div class="w-full md:w-1/2 px-3 mb-6">
             <label for="{{ form.certificate_validation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Validation Certificat</label>
-            {{ form.certificate_validation }}
+            {% if is_manager %}{{ form.certificate_validation|add_attr:"disabled:disabled" }}{% else %}{{ form.certificate_validation }}{% endif %}
           </div>
         </div>
       </div>
 
       <!-- Section détails du projet -->
       {% if form.instance.pk %}
-      <div class="form-section bg-white p-6 rounded-xl shadow-sm border w-full" style="display: none;">
+      <div class="form-section radial-background p-6 rounded-xl shadow-sm border w-full" style="display: none;">
         {% include "_project_detail_content.html" %}
       </div>
       {% endif %}
     </div>
 
     <!-- Boutons d'action -->
-    <div class="mt-8 flex items-center justify-end gap-4">
-      <a href="{% url 'project_list' %}" class="text-sm font-semibold text-gray-600 hover:text-gray-800">Annuler</a>
+    <div id="action-buttons" class="mt-8 flex items-center justify-end gap-4">
+      {% if form.instance.pk %}
+        <a href="{% url 'project_detail' form.instance.pk %}" class="px-6 py-2.5 rounded-full bg-gray-500 text-white font-semibold shadow-sm hover:bg-gray-600 active:scale-[0.99] transition">Voir le projet</a>
+      {% endif %}
+      <a href="{% url 'project_list' %}" class="px-6 py-2.5 rounded-full bg-red-500 text-white font-semibold shadow-sm hover:bg-red-600 active:scale-[0.99] transition">Annuler</a>
       <button type="button" id="back-btn" class="px-6 py-2.5 rounded-full bg-gray-300 text-gray-800 font-semibold shadow-sm hover:bg-gray-400 active:scale-[0.99] transition" style="display: none;">Précédent</button>
       <button type="button" id="next-btn" class="px-6 py-2.5 rounded-full bg-indigo-500 text-white font-semibold shadow-sm hover:bg-indigo-600 active:scale-[0.99] transition">Suivant</button>
+      {% if not is_manager %}
       <button type="submit" id="submit-btn" class="px-6 py-2.5 rounded-full bg-indigo-600 text-white font-semibold shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition" style="display: none;">
         {% if form.instance.pk %}
           Enregistrer les modifications
@@ -191,6 +196,7 @@
           Créer le projet
         {% endif %}
       </button>
+      {% endif %}
     </div>
   </form>
 
@@ -205,19 +211,21 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentSectionIndex = 0;
     let projectId = {{ form.instance.pk|default:"null" }};
 
+    // Force the button container to be visible
+    const actionButtons = document.getElementById('action-buttons');
+    if (actionButtons) {
+        actionButtons.style.display = 'flex';
+    }
+
     function updateButtons() {
-        backBtn.style.display = currentSectionIndex === 0 ? 'none' : 'inline-block';
+        const isFirstSection = currentSectionIndex === 0;
+        const isLastSection = currentSectionIndex >= formSections.length - 1;
 
-        // The last data entry section is section 1.
-        const isLastDataEntrySection = currentSectionIndex === 1;
-
-        nextBtn.style.display = isLastDataEntrySection ? 'none' : 'inline-block';
-        submitBtn.style.display = isLastDataEntrySection ? 'inline-block' : 'none';
-
-        // For existing projects, if we are on the final read-only section, hide action buttons.
-        if (projectId && currentSectionIndex === 2) {
-            nextBtn.style.display = 'none';
-            submitBtn.style.display = 'none';
+        backBtn.style.display = isFirstSection ? 'none' : 'inline-block';
+        nextBtn.style.display = isLastSection ? 'none' : 'inline-block';
+        
+        if (submitBtn) {
+            submitBtn.style.display = isLastSection ? 'inline-block' : 'none';
         }
     }
 
@@ -250,15 +258,12 @@ document.addEventListener('DOMContentLoaded', function () {
     menuItems.forEach(item => {
         item.addEventListener('click', () => {
             const sectionIndex = parseInt(item.getAttribute('data-section'));
-            if (sectionIndex < currentSectionIndex) {
-                showSection(sectionIndex);
-            }
+            showSection(sectionIndex);
         });
     });
 
     nextBtn.addEventListener('click', () => {
-        // The "Suivant" button now only navigates from section 0 to 1.
-        if (currentSectionIndex === 0) {
+        if (currentSectionIndex < formSections.length - 1) {
             showSection(currentSectionIndex + 1);
         }
     });
@@ -269,43 +274,45 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    submitBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        const formData = new FormData(form);
-        const url = projectId ? `/projects/ajax/save/${projectId}/` : '/projects/ajax/save/';
+    if (submitBtn) {
+        submitBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const url = projectId ? `/projects/ajax/save/${projectId}/` : '/projects/ajax/save/';
 
-        fetch(url, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (!projectId && data.pk) {
-                    // It's a new project, redirect to the detail page
-                    window.location.href = `/projects/${data.pk}/`;
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (!projectId && data.pk) {
+                        // It's a new project, redirect to the detail page
+                        window.location.href = `/projects/${data.pk}/`;
+                    } else {
+                        // It's an existing project, show a success message and redirect
+                        alert('Projet mis à jour avec succès!');
+                        window.location.href = `/projects/${projectId}/edit/?section=2`;
+                    }
                 } else {
-                    // It's an existing project, show a success message and redirect
-                    alert('Projet mis à jour avec succès!');
-                    window.location.href = `/projects/${projectId}/edit/?section=2`;
+                    // Handle errors
+                    let errorMessages = 'Le formulaire contient des erreurs:\n';
+                    for (const field in data.errors) {
+                        errorMessages += `${field}: ${data.errors[field].join(', ')}\n`;
+                    }
+                    alert(errorMessages);
                 }
-            } else {
-                // Handle errors
-                let errorMessages = 'Le formulaire contient des erreurs:\n';
-                for (const field in data.errors) {
-                    errorMessages += `${field}: ${data.errors[field].join(', ')}\n`;
-                }
-                alert(errorMessages);
-            }
-        })
-        .catch(error => {
-            console.error('Error submitting form:', error);
-            alert('Une erreur est survenue lors de la soumission du formulaire.');
+            })
+            .catch(error => {
+                console.error('Error submitting form:', error);
+                alert('Une erreur est survenue lors de la soumission du formulaire.');
+            });
         });
-    });
+    }
 
     // Initial state
     const urlParams = new URLSearchParams(window.location.search);

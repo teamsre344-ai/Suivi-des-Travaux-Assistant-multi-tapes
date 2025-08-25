@@ -9,72 +9,66 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <!-- Total Projects -->
-    <div class="bg-white p-5 rounded-2xl border flex justify-between items-center">
+    <div class="kpi-card kpi-card--total">
         <div>
-            <p class="text-sm text-gray-500">Total Projets</p>
-            <p class="text-3xl font-bold text-gray-800">{{ total_projects }}</p>
-            <p class="text-xs text-gray-500 mt-1">+{{ new_this_week }} nouveaux cette semaine</p>
-        </div>
-        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+            <p class="text-sm">Total Projets</p>
+            <p class="text-3xl font-bold">{{ total_projects }}</p>
+            <p class="text-xs mt-1">+{{ new_this_week }} nouveaux cette semaine</p>
         </div>
     </div>
     <!-- Cancelled Projects -->
-    <div class="bg-white p-5 rounded-2xl border flex justify-between items-center">
+    <div class="kpi-card kpi-card--pending">
         <div>
-            <p class="text-sm text-gray-500">Annuler</p>
-            <p class="text-3xl font-bold text-red-500">{{ cancelled_projects }}</p>
-            <p class="text-xs text-gray-500 mt-1">&nbsp;</p> <!-- to keep alignment -->
-        </div>
-        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <p class="text-sm">Annuler</p>
+            <p class="text-3xl font-bold">{{ cancelled_projects }}</p>
+            <p class="text-xs mt-1">&nbsp;</p> <!-- to keep alignment -->
         </div>
     </div>
     <!-- In Progress Projects -->
-    <div class="bg-white p-5 rounded-2xl border flex justify-between items-center">
+    <div class="kpi-card kpi-card--in-progress">
         <div>
-            <p class="text-sm text-gray-500">En cours</p>
-            <p class="text-3xl font-bold text-blue-500">{{ in_progress_projects }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ overdue_in_progress }} en retard</p>
-        </div>
-        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
-            <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            <p class="text-sm">En cours</p>
+            <p class="text-3xl font-bold">{{ in_progress_projects }}</p>
+            <p class="text-xs mt-1">{{ overdue_in_progress }} en retard</p>
         </div>
     </div>
     <!-- Completed Projects -->
-    <div class="bg-white p-5 rounded-2xl border flex justify-between items-center">
+    <div class="kpi-card kpi-card--completed">
         <div>
-            <p class="text-sm text-gray-500">Terminés</p>
-            <p class="text-3xl font-bold text-green-500">{{ completed_projects }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ completed_this_week }} cette semaine</p>
-        </div>
-        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p class="text-sm">Terminés</p>
+            <p class="text-3xl font-bold">{{ completed_projects }}</p>
+            <p class="text-xs mt-1">{{ completed_this_week }} cette semaine</p>
         </div>
     </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
   <!-- Chart 1: Work Type Distribution -->
-  <div id="worktypeChartCard" class="bg-white rounded-2xl border shadow-sm p-5">
+  <div id="worktypeChartCard" class="rounded-2xl p-5">
     <h3 class="text-lg font-semibold mb-4">Répartition par type de travaux</h3>
-    <div class="relative h-80"><canvas id="worktypeChart"></canvas></div>
+    <div class="flex items-center h-80">
+        <div class="relative h-full w-1/2"><canvas id="worktypeChart"></canvas></div>
+        <div id="worktypeChartLegend" class="w-1/2 pl-4 text-sm"></div>
+    </div>
   </div>
 
   <!-- Chart 2: On-time vs. Overdue -->
-  <div id="onTimeChartCard" class="bg-white rounded-2xl border shadow-sm p-5">
+  <div id="onTimeChartCard" class="rounded-2xl p-5">
     <h3 class="text-lg font-semibold mb-4">Projets terminés: à temps vs. en retard</h3>
-    <div class="relative h-80"><canvas id="onTimeChart"></canvas></div>
+    <div class="flex items-center h-80">
+        <div class="relative h-full w-1/2"><canvas id="onTimeChart"></canvas></div>
+        <div id="onTimeChartLegend" class="w-1/2 pl-4 text-sm"></div>
+    </div>
   </div>
 
   <!-- Chart 3: Top 10 Clients -->
-  <div id="clientChartCard" class="bg-white rounded-2xl border shadow-sm p-5">
+  <div id="clientChartCard" class="rounded-2xl p-5">
     <h3 class="text-lg font-semibold mb-4">Top 10 des clients</h3>
     <div class="relative h-80"><canvas id="clientChart"></canvas></div>
   </div>
 
   <!-- Chart 4: Project Status -->
-  <div id="statusChartCard" class="bg-white rounded-2xl border shadow-sm p-5">
+  <div id="statusChartCard" class="rounded-2xl p-5">
     <h3 class="text-lg font-semibold mb-4">Répartition par statut</h3>
     <div class="relative h-80"><canvas id="statusChart"></canvas></div>
   </div>
@@ -92,7 +86,7 @@
 </style>
 
 <div id="chart-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50" style="opacity: 0;">
-  <div class="modal-content bg-white rounded-2xl shadow-xl p-5 w-full max-w-4xl h-full max-h-[80vh] transform scale-95">
+  <div class="modal-content rounded-2xl shadow-xl p-5 w-full max-w-4xl h-full max-h-[80vh] transform scale-95">
     <div class="flex justify-between items-center mb-4">
       <h3 id="modal-chart-title" class="text-lg font-semibold"></h3>
       <button id="modal-close-btn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
@@ -139,6 +133,9 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
+              legend: {
+                  display: false
+              },
               tooltip: {
                   callbacks: {
                       label: function(context) {
@@ -165,7 +162,15 @@
           backgroundColor: [CHART_COLORS.green, CHART_COLORS.red, CHART_COLORS.grey],
         }]
       },
-      options: { responsive: true, maintainAspectRatio: false }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+      }
     },
     'clientChart': {
       type: 'bar',
@@ -238,12 +243,67 @@
     }
   };
 
+  const chartInstances = {};
   // Render charts on page load
   for (const chartId in chartConfigs) {
     const canvas = document.getElementById(chartId);
     if (canvas) {
-      new Chart(canvas, chartConfigs[chartId]);
+      chartInstances[chartId] = new Chart(canvas, chartConfigs[chartId]);
     }
+  }
+
+  const worktypePercentages = [{% for item in worktype_data %}{{ item.percentage }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+  const createCustomLegend = (chart, legendContainerId, percentages) => {
+    const legendContainer = document.getElementById(legendContainerId);
+    if (!legendContainer) return;
+    legendContainer.innerHTML = '';
+    const ul = document.createElement('ul');
+    ul.style.listStyle = 'none';
+    ul.style.padding = '0';
+
+    const data = chart.data;
+    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+
+    data.labels.forEach((label, i) => {
+        const value = data.datasets[0].data[i];
+        let percentage;
+        if (percentages) {
+            percentage = percentages[i];
+        } else {
+            percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+        }
+        const backgroundColor = data.datasets[0].backgroundColor[i];
+
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.alignItems = 'center';
+        li.style.marginBottom = '8px';
+
+        const colorBox = document.createElement('span');
+        colorBox.style.display = 'inline-block';
+        colorBox.style.width = '16px';
+        colorBox.style.height = '16px';
+        colorBox.style.backgroundColor = backgroundColor;
+        colorBox.style.marginRight = '8px';
+        colorBox.style.borderRadius = '4px';
+
+        const text = document.createElement('span');
+        text.innerText = `${label}: ${value} (${percentage}%)`;
+
+        li.appendChild(colorBox);
+        li.appendChild(text);
+        ul.appendChild(li);
+    });
+
+    legendContainer.appendChild(ul);
+  };
+
+  if (chartInstances.worktypeChart) {
+      createCustomLegend(chartInstances.worktypeChart, 'worktypeChartLegend', worktypePercentages);
+  }
+  if (chartInstances.onTimeChart) {
+      createCustomLegend(chartInstances.onTimeChart, 'onTimeChartLegend', null);
   }
 
   for (const chartId in chartConfigs) {

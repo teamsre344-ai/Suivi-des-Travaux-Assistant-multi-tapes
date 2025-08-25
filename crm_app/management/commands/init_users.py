@@ -5,21 +5,8 @@ from django.utils import timezone
 from random import choice, randint, random
 from datetime import timedelta
 
+from django.conf import settings
 from crm_app.models import Technician, Project, ChecklistItem, TimelineEntry
-
-USERS = [
-    ("Mahmoud", "Feki", "mahmoud.feki@logibec.com", True),
-    ("Ruben", "Geghamyan", "ruben.geghamyan@logibec.com", True),
-    ("Eric", "Lamontagne", "Eric.Lamontagne@lgisolutions.com", True),
-    ("Frédéric", "Rousseau", "frederic.rousseau@lgisolutions.com", False),
-    ("Éric", "Champagne", "Eric.Champagne@lgisolutions.com", False),
-    ("Marc", "Banville", "marc.banville@lgisolutions.com", False),
-    ("Halimatou", "Ly", "halimatou.ly@lgisolutions.com", False),
-    ("Roméo", "Kutnjem", "romeo.kutnjem@lgisolutions.com", False),
-    ("Sylvain", "Berthiaume", "sylvain.berthiaume@lgisolutions.com", False),
-    ("Masamba", "Lema", "masamba.lema@lgisolutions.com", False),
-    ("Dounia", "ElBaine", "Dounia.ElBaine@lgisolutions.com", False),
-]
 
 DEFAULT_PASSWORD = "ChangeMe2025!"
 
@@ -28,10 +15,20 @@ class Command(BaseCommand):
     help = "Create demo users, technicians, and sample projects."
 
     def handle(self, *args, **kwargs):
-        self.stdout.write("Seeding users/technicians…")
+        self.stdout.write("Seeding users/technicians from TEAM_DIRECTORY…")
+
+        directory = getattr(settings, "TEAM_DIRECTORY", {})
+        if not directory:
+            self.stdout.write(self.style.WARNING("TEAM_DIRECTORY is not defined in settings."))
+            return
 
         techs = []
-        for first, last, email, is_mgr in USERS:
+        for email, data in directory.items():
+            first = data.get("first_name", "")
+            last = data.get("last_name", "")
+            is_mgr = data.get("is_manager", False)
+            role = data.get("role", "Technicien")
+
             username = email.split("@")[0].replace(".", "_").lower()
             user, created = User.objects.get_or_create(
                 username=username,
@@ -42,7 +39,6 @@ class Command(BaseCommand):
                     "is_staff": bool(is_mgr),
                 },
             )
-            # Only set password on first creation (keeps idempotency)
             if created:
                 user.set_password(DEFAULT_PASSWORD)
                 user.save()
@@ -50,15 +46,15 @@ class Command(BaseCommand):
             tech, _ = Technician.objects.get_or_create(
                 user=user,
                 defaults={
-                    "role": "Manager" if is_mgr else "Technicien",
+                    "role": role,
                     "is_manager": is_mgr,
                     "phone": f"514-555-{randint(1000, 9999)}",
                 },
             )
-            # Ensure flags stay in sync if you toggle is_mgr later
-            if tech.is_manager != is_mgr:
+            
+            if tech.is_manager != is_mgr or tech.role != role:
                 tech.is_manager = is_mgr
-                tech.role = "Manager" if is_mgr else "Technicien"
+                tech.role = role
                 tech.save()
 
             techs.append(tech)
@@ -68,7 +64,7 @@ class Command(BaseCommand):
         self.stdout.write("Creating sample projects…")
 
         # Keys must match your model choices exactly
-        products = ["GRF", "GRM", "GFM", "Clinibase CI", "SIurge", "eClinibase"]
+        products = ["GRF", "GRM", "GFM", "Clinibase CI", "SIurge", "eClinibase", "BI"]
         work_types = ["Migration", "Mise a niveau", "Rehaussement", "Demenagement"]
         status_opts = ["pending", "in_progress", "completed"]
         envs = ["test", "prod"]

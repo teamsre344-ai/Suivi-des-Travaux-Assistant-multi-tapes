@@ -34,6 +34,26 @@ urlpatterns = [
         views.project_checklist_pdf_view,
         name="project_checklist_pdf",
     ),
+    path(
+        "projects/<int:pk>/checklist_onenote/",
+        views.project_checklist_onenote_view,
+        name="project_checklist_onenote",
+    ),
+    path(
+        "projects/<int:pk>/checklist_confluence/",
+        views.project_checklist_confluence_view,
+        name="project_checklist_confluence",
+    ),
+    path(
+        "projects/<int:pk>/checklist/save-onenote/",
+        views.checklist_save_onenote_view,
+        name="checklist_save_onenote",
+    ),
+    path(
+        "projects/<int:pk>/checklist/confluence/",
+        views.checklist_confluence_view,
+        name="checklist_confluence",
+    ),
     # Checklist item actions
     path(
         "checklist/item/<int:item_id>/add-note/",
@@ -44,6 +64,11 @@ urlpatterns = [
         "checklist/item/<int:item_id>/toggle/",
         views.checklist_item_toggle_view,
         name="checklist_item_toggle",
+    ),
+    path(
+        "projects/<int:pk>/timeline/add/",
+        views.timeline_add_entry_view,
+        name="timeline_add_entry",
     ),
     # Other pages
     path("profile/", views.profile_view, name="profile"),

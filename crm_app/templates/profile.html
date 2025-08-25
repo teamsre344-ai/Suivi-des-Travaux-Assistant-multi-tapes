@@ -36,67 +36,38 @@
 </div>
 
 <!-- KPIs -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  <div class="kpi-card">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm text-gray-600">Mes projets</p>
-        <h3 class="text-3xl font-bold">{{ total|intcomma }}</h3>
-      </div>
-      <span class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-        <i class="fa-solid fa-folder-open"></i>
-      </span>
-    </div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+  <div class="kpi-card kpi-card--total">
+    <p class="text-sm opacity-80">Total Projets</p>
+    <div class="text-3xl font-bold mt-1">{{ total|intcomma }}</div>
+    <div class="text-xs opacity-70 mt-2">+ 21 ce mois ci</div>
   </div>
-  <div class="kpi-card">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm text-gray-600">En cours</p>
-        <h3 class="text-3xl font-bold text-blue-600">{{ doing|intcomma }}</h3>
-      </div>
-      <span class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-        <i class="fa-solid fa-list-check"></i>
-      </span>
-    </div>
+  <div class="kpi-card kpi-card--pending">
+    <p class="text-sm opacity-80">En attente</p>
+    <div class="text-3xl font-bold mt-1">{{ pending|intcomma }}</div>
+    <div class="text-xs opacity-70 mt-2">0 aujourd'hui -100,0%</div>
   </div>
-  <div class="kpi-card">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm text-gray-600">Terminés</p>
-        <h3 class="text-3xl font-bold text-green-600">{{ done|intcomma }}</h3>
-      </div>
-      <span class="h-10 w-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-        <i class="fa-solid fa-circle-check"></i>
-      </span>
-    </div>
+  <div class="kpi-card kpi-card--in-progress">
+    <p class="text-sm opacity-80">En cours</p>
+    <div class="text-3xl font-bold mt-1">{{ doing|intcomma }}</div>
+    <div class="text-xs opacity-70 mt-2">ostation</div>
   </div>
-  <div class="kpi-card">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm text-gray-600">Livraison à l’heure</p>
-        <h3 class="text-3xl font-bold {% if on_time_rate >= 75 %}text-green-600{% elif on_time_rate >= 50 %}text-amber-600{% else %}text-red-600{% endif %}">
-          {{ on_time_rate }}%
-        </h3>
-      </div>
-      <span class="h-10 w-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
-        <i class="fa-solid fa-clock"></i>
-      </span>
-    </div>
-    <div class="mt-2 text-xs text-gray-500">
-      Moyenne checklist: {{ completion_avg }}%
-    </div>
+  <div class="kpi-card kpi-card--completed">
+    <p class="text-sm opacity-80">Terminés</p>
+    <div class="text-3xl font-bold mt-1">{{ done|intcomma }}</div>
+    <div class="text-xs opacity-70 mt-2">0 cette semaine</div>
   </div>
 </div>
 
 <!-- Product mix + recent -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-  <div class="bg-white rounded-2xl border shadow-sm p-4 lg:col-span-1">
+  <div class="lg:col-span-1">
     <h3 class="font-semibold mb-3">Produits les plus fréquents</h3>
     <div class="space-y-2">
       {% for row in product_counts %}
-        <div class="flex items-center justify-between rounded-lg border px-3 py-2">
-          <span class="text-sm">{{ row.product }}</span>
-          <span class="font-semibold">{{ row.c }}</span>
+        <div class="product-item flex items-center justify-between rounded-lg px-4 py-3 text-white">
+          <span class="font-semibold">{{ row.product }}</span>
+          <span class="font-bold">{{ row.c }} &raquo;</span>
         </div>
       {% empty %}
         <div class="text-sm text-gray-500">Aucune donnée.</div>
@@ -104,7 +75,7 @@
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl border shadow-sm p-4 lg:col-span-2">
+  <div class="elevated-card lg:col-span-2">
     <div class="flex items-center justify-between mb-3">
       <h3 class="font-semibold">Projets récents (assignés)</h3>
       <a href="{% url 'project_list' %}?assigned_to_me=on" class="text-sm text-indigo-600 hover:underline">Voir tout</a>
@@ -152,7 +123,7 @@
 </div>
 
 <!-- Also show projects created by me -->
-<div class="bg-white rounded-2xl border shadow-sm p-4">
+<div class="elevated-card">
   <div class="flex items-center justify-between mb-3">
     <h3 class="font-semibold">Projets récents (créés par moi)</h3>
     <a href="{% url 'project_list' %}?created_by_me=on" class="text-sm text-indigo-600 hover:underline">Voir tout</a>

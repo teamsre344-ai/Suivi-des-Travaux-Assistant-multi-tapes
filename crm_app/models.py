@@ -148,6 +148,10 @@ class Project(models.Model):
     production_phase = models.CharField(
         max_length=20, choices=PHASE_CHOICES, default="not_started"
     )
+    preparation_phase_started_at = models.DateTimeField(null=True, blank=True)
+    preparation_phase_completed_at = models.DateTimeField(null=True, blank=True)
+    production_phase_started_at = models.DateTimeField(null=True, blank=True)
+    production_phase_completed_at = models.DateTimeField(null=True, blank=True)
 
     # ----- Coordination des déploiements -----
     # Planning board text (pasted by manager/counsellor)

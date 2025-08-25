@@ -31,6 +31,7 @@ from .forms import (
     ChecklistItemUpdateForm,
     CoordinationDeploymentForm,
     ProjectForm,
+    TimelineEntryForm,
 )
 
 from .models import (
@@ -918,17 +919,17 @@ def project_create_view(request, pk=None):
     """
     tech = _sync_user_and_technician_from_directory(request.user)
 
+    project = None
     if pk:
-        project = get_object_or_404(Project, pk=pk)
-    else:
-        project = None
-
-    # Role-based redirection
-    if _is_planner_or_manager_from_tech(tech):
-        if project:
-            return redirect("coordination_form_edit", pk=project.pk)
+        tech = _sync_user_and_technician_from_directory(request.user)
+        if _is_planner_or_manager_from_tech(tech):
+            project = get_object_or_404(Project, pk=pk)
         else:
-            return redirect("coordination_form")
+            project = get_object_or_404(Project, pk=pk, technician=tech)
+
+    # Role-based redirection for creating new projects
+    if _is_planner_or_manager_from_tech(tech) and not pk:
+        return redirect("coordination_form")
 
     if request.method == "POST":
         form = ProjectForm(request.POST, request.FILES, instance=project)
@@ -942,16 +943,15 @@ def project_create_view(request, pk=None):
             messages.success(
                 request, f"Projet {'mis à jour' if not is_new else 'créé'} avec succès."
             )
-            if is_new:
-                url = reverse('project_update', kwargs={'pk': project.pk})
-                return redirect(f'{url}?section=2')
-            
-            return redirect("project_detail", pk=project.pk)
+            return redirect("project_update", pk=project.pk)
     else:
         form = ProjectForm(instance=project)
 
+    timeline_form = TimelineEntryForm()
+    is_manager = _is_planner_or_manager_from_tech(tech)
+    
     return render(
-        request, "project_form.html", {"form": form, "technician": tech, "project": project}
+        request, "project_form.html", {"form": form, "technician": tech, "project": project, "is_manager": is_manager, "timeline_form": timeline_form}
     )
 
 
@@ -1027,10 +1027,18 @@ def project_phase_update_view(request, pk):
 
     if phase == "preparation":
         p.preparation_phase = new_state
+        if new_state == "in_progress":
+            p.preparation_phase_started_at = timezone.now()
+        elif new_state == "completed":
+            p.preparation_phase_completed_at = timezone.now()
         label = "Préparation"
         display = p.get_preparation_phase_display()
     else:
         p.production_phase = new_state
+        if new_state == "in_progress":
+            p.production_phase_started_at = timezone.now()
+        elif new_state == "completed":
+            p.production_phase_completed_at = timezone.now()
         label = "Production"
         display = p.get_production_phase_display()
 
@@ -1200,6 +1208,67 @@ def project_checklist_pdf_view(request, pk):
     return FileResponse(pdf_io, filename=filename, content_type="application/pdf")
 
 
+@login_required
+def project_checklist_onenote_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    items = project.checklist_items.all().order_by('order')
+    context = {
+        'project': project,
+        'items': items,
+    }
+    return render(request, 'checklist_onenote.html', context)
+
+@login_required
+def project_checklist_confluence_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    items = project.checklist_items.all().order_by('order')
+    context = {
+        'project': project,
+        'items': items,
+    }
+    return render(request, 'checklist_confluence.html', context)
+
+
+@login_required
+@require_POST
+def checklist_save_onenote_view(request, pk):
+    tech = _sync_user_and_technician_from_directory(request.user)
+    project = (
+        get_object_or_404(Project, pk=pk)
+        if getattr(tech, "is_manager", False)
+        else get_object_or_404(
+            Project, Q(pk=pk) & (Q(technician=tech) | Q(created_by=request.user))
+        )
+    )
+
+    try:
+        data = json.loads(request.body)
+        content = data.get('content', '')
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+
+    # Here, you would parse the HTML content and create/update ChecklistItem objects.
+    # For this example, we'll just store the raw HTML in a new field on the Project model.
+    # This requires adding a new field to the Project model, e.g., `onenote_checklist_html`.
+    # from bs4 import BeautifulSoup
+    # soup = BeautifulSoup(content, 'html.parser')
+    # items = []
+    # for li in soup.find_all('li'):
+    #     items.append(li.get_text())
+    
+    # For now, we'll just simulate saving.
+    print("Received OneNote content:", content)
+
+    return JsonResponse({'status': 'success', 'message': 'Checklist OneNote sauvegardée.'})
+
+
+@login_required
+def checklist_confluence_view(request, pk):
+    # Placeholder for Confluence integration
+    project = get_object_or_404(Project, pk=pk)
+    return JsonResponse({'status': 'info', 'message': 'Confluence integration is not yet implemented.'})
+
+
 # --- Profile (kept for URL import) ---
 @login_required
 def profile_view(request):
@@ -1275,6 +1344,22 @@ def duplicate_project_view(request, pk):
     
     messages.success(request, f"Project '{project_to_duplicate.title}' has been duplicated.")
     return redirect('project_detail', pk=new_project.pk)
+
+
+@login_required
+def timeline_add_entry_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    if request.method == 'POST':
+        form = TimelineEntryForm(request.POST)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.project = project
+            entry.environment = project.environment
+            entry.save()
+            messages.success(request, "Timeline entry added.")
+        else:
+            messages.error(request, "Error adding timeline entry.")
+    return redirect('project_update', pk=project.pk)
 
 
 @login_required
