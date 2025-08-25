@@ -19,7 +19,7 @@
 /* Custom styles for the new dashboard design */
 
 .radial-background {
-  background: radial-gradient(circle at 50% 0%, #E6F3FF, #F4F7FD 40%) !important;
+  background-color: #F5F6FA !important;
 }
 
 body {
