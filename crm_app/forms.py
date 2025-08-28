@@ -269,10 +269,14 @@ class ProjectForm(forms.ModelForm):
                     "placeholder": "Collez ici le tableau des versions (Markdown / CSV / texte).",
                 }
             ),
-            "gestionnaire_projet": forms.TextInput(
+            "gestionnaire_projet": forms.Select(
                 attrs={
-                    "class": "form-control shadow-sm",
-                    "placeholder": "Nom du gestionnaire de projet",
+                    "class": "form-select shadow-sm",
+                }
+            ),
+            "status": forms.Select(
+                attrs={
+                    "class": "form-select shadow-sm",
                 }
             ),
         }
@@ -287,6 +291,15 @@ class ProjectForm(forms.ModelForm):
         self.fields['project_number'].required = False
         self.fields['environment'].required = False
         self.fields['work_type'].required = False
+
+        # Add choices for gestionnaire_projet
+        self.fields["gestionnaire_projet"].widget.choices = [
+            ("", "---------"),
+            ("Patrick Savard", "Patrick Savard"),
+            ("Jessyca Lantagne", "Jessyca Lantagne"),
+            ("Mamdouh Mikhail", "Mamdouh Mikhail"),
+            ("Dounia EIBaine", "Dounia EIBaine"),
+        ]
 
         # Get client names from the database
         client_names = (

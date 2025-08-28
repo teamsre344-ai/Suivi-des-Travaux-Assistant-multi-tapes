@@ -44,7 +44,7 @@
 </div>
 
 <!-- Filter bar -->
-<form method="get" class="radial-background rounded-2xl border shadow-sm p-4 mb-6 space-y-4">
+<form method="get" class="content-card rounded-2xl border shadow-sm p-4 mb-6 space-y-4">
   <!-- First row -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
     <!-- Search -->
@@ -149,7 +149,7 @@
 </form>
 
 <!-- Table -->
-<div class="radial-background rounded-2xl shadow-sm border overflow-hidden">
+<div class="content-card rounded-2xl shadow-sm border overflow-hidden">
   <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
@@ -172,7 +172,7 @@
             <div class="text-blue-600 font-medium">{{ p.project_number }}</div>
             <div class="text-xs text-gray-500">{{ p.title|default:"—" }}</div>
           </td>
-          <td class="px-4 py-2">{{ p.client_name }}</td>
+          <td class="px-4 py-2">{{ p.client_name|default:"—" }}</td>
           <td class="px-4 py-2"><span class="badge bg-blue-100 text-blue-800">{{ p.product }}</span></td>
           <td class="px-4 py-2">
             <span class="badge {% if p.environment == 'prod' %}bg-green-100 text-green-800{% else %}bg-gray-200 text-gray-800{% endif %}">

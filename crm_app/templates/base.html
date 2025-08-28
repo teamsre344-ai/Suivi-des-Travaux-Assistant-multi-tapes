@@ -22,6 +22,7 @@
   </script>
 
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=5" />
+  <link rel="stylesheet" href="{% static 'css/team_dashboard.css' %}" />
 
   <!-- Small utility CSS (no @apply so it works with CDN) -->
   <style>
@@ -51,25 +52,25 @@
             <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg">
               <i class="fa-solid fa-chart-simple text-xl"></i>
             </span>
-            <span class="text-2xl font-bold tracking-tight text-gray-800">SRE Track</span>
+            <span class="text-2xl font-bold tracking-tight text-white">SRE Track</span>
           </a>
 
           <!-- Nav -->
           {% with url_name=request.resolver_match.url_name %}
           <nav class="hidden md:flex items-center gap-8 text-lg">
             <a href="{% url 'home' %}"
-               class="transition hover:text-blue-600 {% if url_name == 'home' %}text-blue-600 font-semibold{% else %}text-gray-700{% endif %}">
+               class="transition hover:text-blue-400 {% if url_name == 'home' %}text-blue-400 font-semibold{% else %}text-gray-300{% endif %}">
               Tableau de bord
             </a>
 
             <a href="{% url 'project_list' %}"
-               class="transition hover:text-blue-600 {% if url_name == 'project_list' %}text-blue-600 font-semibold{% else %}text-gray-700{% endif %}">
+               class="transition hover:text-blue-400 {% if url_name == 'project_list' %}text-blue-400 font-semibold{% else %}text-gray-300{% endif %}">
               Projets
             </a>
 
             {% if technician and technician.is_manager %}
             <a href="{% url 'team_dashboard' %}"
-               class="transition hover:text-blue-600 {% if url_name == 'team_dashboard' %}text-blue-600 font-semibold{% else %}text-gray-700{% endif %}">
+               class="transition hover:text-blue-400 {% if url_name == 'team_dashboard' %}text-blue-400 font-semibold{% else %}text-gray-300{% endif %}">
               Équipe
             </a>
             {% endif %}
@@ -81,13 +82,13 @@
         <div class="flex-grow flex items-center justify-center px-8">
             <form action="{% url 'search' %}" method="get" class="w-full max-w-md">
                 <div class="relative flex items-center">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-400"></i>
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-500"></i>
                     <input
                         type="text"
                         name="q"
                         value="{{ request.GET.q|default_if_none:'' }}"
                         placeholder="Rechercher : projet, membre, produit…"
-                        class="w-full h-12 pl-11 pr-4 rounded-full border border-gray-200 bg-gray-50 hover:bg-white focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition"
+                        class="w-full h-12 pl-11 pr-4 rounded-full border border-gray-700 bg-gray-800 text-white placeholder-gray-500 hover:bg-gray-700 focus:bg-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition"
                         autocomplete="off" />
                 </div>
             </form>
@@ -114,7 +115,7 @@
 
           <!-- Logout -->
           <a href="{% url 'logout' %}"
-             class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
+             class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-gray-700 text-gray-400 hover:text-white hover:bg-gray-700 transition"
              title="Se déconnecter" aria-label="Se déconnecter">
             <i class="fa-solid fa-right-from-bracket text-lg"></i>
           </a>
@@ -125,16 +126,16 @@
   </header>
 
   <!-- MAIN -->
-  <main class="flex-grow">
+  <main class="flex-grow z-10">
     <div class="tw-container py-10">
       {% if messages %}
         <div class="space-y-2 mb-4">
           {% for m in messages %}
             <div class="p-3 rounded border
-                        {% if m.level_tag == 'success' %} bg-green-50 text-green-700 border-green-200
-                        {% elif m.level_tag == 'warning' %} bg-amber-50 text-amber-800 border-amber-200
-                        {% elif m.level_tag == 'error' %} bg-red-50 text-red-700 border-red-200
-                        {% else %} bg-blue-50 text-blue-800 border-blue-200
+                        {% if m.level_tag == 'success' %} bg-green-900/50 text-green-300 border-green-700
+                        {% elif m.level_tag == 'warning' %} bg-amber-900/50 text-amber-300 border-amber-700
+                        {% elif m.level_tag == 'error' %} bg-red-900/50 text-red-300 border-red-700
+                        {% else %} bg-blue-900/50 text-blue-300 border-blue-700
                         {% endif %}">
               {{ m }}
             </div>
@@ -147,11 +148,11 @@
   </main>
 
   <!-- FOOTER -->
-  <footer>
-    <div class="tw-container px-4 py-4 text-sm text-gray-500 flex items-center justify-between">
+  <footer class="z-10">
+    <div class="tw-container px-4 py-4 text-sm text-gray-400 flex items-center justify-between">
       <span>&copy; {{ now|date:"Y" }}LGI Healthcare Solutions | LGI Solutions Santé </span>
       <div class="space-x-3">
-        <a class="hover:text-brand" href="https://www.linkedin.com/company/lgisolutions/about/"><i class="fa-brands fa-linkedin"></i></a>
+        <a class="hover:text-blue-400" href="https://www.linkedin.com/company/lgisolutions/about/"><i class="fa-brands fa-linkedin"></i></a>
       </div>
     </div>
   </footer>

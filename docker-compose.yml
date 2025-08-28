@@ -20,5 +20,19 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
+  web_new:
+    build:
+      context: .
+      dockerfile: Dockerfile.new
+    command: gunicorn crm_project.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
 volumes:
   postgres_data:

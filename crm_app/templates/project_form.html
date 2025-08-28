@@ -93,6 +93,14 @@
             <label for="{{ form.assigned_to.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Assigné à</label>
             {% if is_manager %}{{ form.assigned_to|add_attr:"disabled:disabled" }}{% else %}{{ form.assigned_to }}{% endif %}
           </div>
+          <div>
+            <label for="{{ form.gestionnaire_projet.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Gestionnaire de projet</label>
+            {% if is_manager %}{{ form.gestionnaire_projet|add_attr:"disabled:disabled" }}{% else %}{{ form.gestionnaire_projet }}{% endif %}
+          </div>
+          <div>
+            <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            {% if is_manager %}{{ form.status|add_attr:"disabled:disabled" }}{% else %}{{ form.status }}{% endif %}
+          </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-6">
             <!-- Préparation -->

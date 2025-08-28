@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="{% static 'css/coordination_form.css' %}" />
 </head>
 
-<body>
+<body class="radial-background">
   <!-- HEADER / NAV -->
   <header class="sticky top-0 z-40 bg-white/80 backdrop-blur">
     <div class="tw-container px-6">
@@ -136,39 +136,39 @@
     <form method="post" enctype="multipart/form-data" novalidate autocomplete="off">
       {% csrf_token %}
       
-      <div class="card card--cap">
-        <h2 class="card__title">Informations principales</h2>
-        <div class="form-grid">
-          <div class="field">
-            <label for="{{ form.project_number.id_for_label }}">Numéro de projet</label>
-            {{ form.project_number }}
-          </div>
-          <div class="field">
-            <label for="{{ form.client_name.id_for_label }}">Nom du client</label>
-            {{ form.client_name }}
-          </div>
-          <div class="field">
-            <label for="{{ form.product.id_for_label }}">Produit</label>
-            {{ form.product }}
-          </div>
-          <div class="field">
-            <label for="{{ form.technician.id_for_label }}">Spécialiste déploiement assigné</label>
-            {{ form.technician }}
-          </div>
-          <div class="field">
-            <label for="{{ form.gestionnaire_projet.id_for_label }}">Gestionnaire de Projet</label>
-            {{ form.gestionnaire_projet }}
-          </div>
-          <div class="field">
-            <label for="{{ form.work_type.id_for_label }}">Type de travaux</label>
-            {{ form.work_type }}
+      <div class="form-layout">
+        <div class="card card-main">
+          <h2 class="card__title"><i class="fa-solid fa-circle-info"></i> Informations principales</h2>
+          <div class="form-grid">
+            <div class="field">
+              <label for="{{ form.project_number.id_for_label }}">Numéro de projet</label>
+              {{ form.project_number }}
+            </div>
+            <div class="field">
+              <label for="{{ form.client_name.id_for_label }}">Nom du client</label>
+              {{ form.client_name }}
+            </div>
+            <div class="field">
+              <label for="{{ form.product.id_for_label }}">Produit</label>
+              {{ form.product }}
+            </div>
+            <div class="field">
+              <label for="{{ form.technician.id_for_label }}">Spécialiste déploiement assigné</label>
+              {{ form.technician }}
+            </div>
+            <div class="field">
+              <label for="{{ form.gestionnaire_projet.id_for_label }}">Gestionnaire de Projet</label>
+              {{ form.gestionnaire_projet }}
+            </div>
+            <div class="field">
+              <label for="{{ form.work_type.id_for_label }}">Type de travaux</label>
+              {{ form.work_type }}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="grid-2">
-        <div class="card card--tint-blue">
-          <h2 class="card__title">Délais de livraison</h2>
+        <div class="card card-delivery">
+          <h2 class="card__title"><i class="fa-solid fa-calendar-check"></i> Délais de livraison</h2>
           <div class="row-3">
             <div class="field">
               <label for="{{ form.prep_date.id_for_label }}">Date</label>
@@ -185,8 +185,8 @@
           </div>
         </div>
 
-        <div class="card card--tint-green">
-          <h2 class="card__title">Production</h2>
+        <div class="card card-production">
+          <h2 class="card__title"><i class="fa-solid fa-cogs"></i> Production</h2>
           <div class="row-3">
             <div class="field">
               <label for="{{ form.prod_date.id_for_label }}">Date</label>

@@ -19,7 +19,37 @@
 /* Custom styles for the new dashboard design */
 
 .radial-background {
-  background-color: #F5F6FA !important;
+  background: radial-gradient(circle at 50% 50%, #1d283c, #111827);
+  color: #f9fafb; /* A light text color for contrast */
+  position: relative;
+}
+
+.radial-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(107, 33, 168, 0.4), rgba(59, 130, 246, 0.4));
+  animation: gradient-animation 15s ease infinite;
+  z-index: -1;
+}
+
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.tw-container {
+  background-color: transparent !important;
 }
 
 body {
@@ -145,6 +175,28 @@ body {
   box-shadow: none;
 }
 
+.activity-card {
+    background-color: transparent;
+    box-shadow: none;
+    color: white;
+}
+
+.activity-card h3, .activity-card a {
+    color: white;
+}
+
+.activity-card .text-gray-500 {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.activity-card .text-gray-800 {
+    color: white;
+}
+
+#worktypeDonutLegend .text-gray-600, #worktypeDonutLegend .text-gray-800 {
+    color: white;
+}
+
 .card-title-container {
   height: 36px;
   display: flex;
@@ -168,12 +220,29 @@ body {
 }
 
 .quick-action-card {
-  background-color: #F4F7FD;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.5rem;
   padding: 1.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
   transition: all 0.2s ease-in-out;
+  color: white;
 }
+
+.quick-action-card h4 {
+    color: white;
+}
+
+.quick-action-card p {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.quick-action-card .bg-blue-200 { background-color: rgba(59, 130, 246, 0.3) !important; }
+.quick-action-card .text-blue-600 { color: #dbeafe !important; }
+.quick-action-card .bg-purple-200 { background-color: rgba(168, 85, 247, 0.3) !important; }
+.quick-action-card .text-purple-600 { color: #e9d5ff !important; }
+.quick-action-card .bg-green-200 { background-color: rgba(34, 197, 94, 0.3) !important; }
+.quick-action-card .text-green-600 { color: #dcfce7 !important; }
 
 .quick-action-card:hover {
   transform: translateY(-5px);
@@ -181,10 +250,10 @@ body {
 }
 
 .table-container {
-  background: radial-gradient(circle at 50% 0%, #E6F3FF, #F4F7FD 40%);
+  background: transparent;
   border-radius: 1.5rem;
   padding: 1.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .btn-primary {
@@ -249,11 +318,32 @@ body {
     border-spacing: 0 0.5rem; /* Vertical spacing between rows */
 }
 
+.table-container h3, .table-container a {
+  color: white;
+}
+
 .table-container th {
-    color: #9ca3af; /* gray-400 */
+    color: rgba(255, 255, 255, 0.7); /* Lighter color for headers */
     font-weight: 500;
     text-transform: uppercase;
     font-size: 0.75rem;
+}
+
+.table-container tbody tr td {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.table-container .text-blue-600 {
+    color: #93c5fd !important; /* A light blue that works on dark backgrounds */
+}
+
+.table-container .bg-blue-100 {
+    background-color: rgba(59, 130, 246, 0.3) !important;
+    color: #dbeafe !important;
+}
+
+.table-container .bg-gray-200 {
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .table-container tbody tr {
@@ -473,4 +563,150 @@ header .tw-container, footer .tw-container {
 .badge:hover {
   transform: translateY(-2px);
   box-shadow: 0 7px 14px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.08);
+}
+
+.content-card {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.content-card .text-blue-600 {
+    color: #dbeafe; /* A light blue color */
+}
+
+/* Project list filter form inputs */
+form.content-card input[type="text"],
+form.content-card input[type="date"],
+form.content-card select {
+    background-color: transparent;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+form.content-card input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+form.content-card label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+form.content-card select option {
+    background: #1d283c;
+    color: white;
+}
+
+/* Project form styling */
+.form-section {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.form-section label {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.form-section input,
+.form-section select,
+.form-section textarea {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+.form-section input::placeholder,
+.form-section textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.form-section .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.form-section .text-blue-800 {
+    color: #93c5fd !important;
+}
+
+.form-section .bg-gradient-to-br {
+    background-image: none !important;
+    background-color: rgba(34, 197, 94, 0.1) !important;
+    border-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+.form-section .text-green-800 {
+    color: #86efac !important;
+}
+
+.menu-item {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.menu-item.active {
+    color: white !important;
+    border-bottom-color: white !important;
+}
+
+h1 {
+    color: white !important;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card__title {
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 24px;
+  margin: 0 0 16px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phase-card {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.btn {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #4361ee;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover {
+  background-color: #3a53c4;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
 }
