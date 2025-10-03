@@ -1,12 +1,20 @@
 from pathlib import Path
 from decouple import config
 from django.core.management.utils import get_random_secret_key
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Core ---
 SECRET_KEY = config("SECRET_KEY", default=get_random_secret_key())
 DEBUG = config("DEBUG", cast=bool, default=True)
+
+# Microsoft Azure AD Application Settings
+MICROSOFT_APP_ID = config("MICROSOFT_APP_ID", default="")
+MICROSOFT_APP_SECRET = config("MICROSOFT_APP_SECRET", default="")
+MICROSOFT_REDIRECT_URI = config("MICROSOFT_REDIRECT_URI", default="")
+MICROSOFT_AUTHORITY = "https://login.microsoftonline.com/common"
+MICROSOFT_SCOPE = ["User.Read"]
 
 
 def _split(env_key: str, default_val: str = ""):
@@ -100,7 +108,7 @@ else:
     }
 
 # --- Passwordless login flags ---
-PASSWORDLESS_LOGIN = True  # enable email-only login
+PASSWORDLESS_LOGIN = False  # enable email-only login
 PASSWORDLESS_ALLOWED_DOMAINS = ["lgisolutions.com"]
 PASSWORDLESS_FALLBACK_DOMAINS = [
     "logibec.com",
@@ -125,14 +133,18 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "crm_app" / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # --- Auth redirects ---
 LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "home"
+LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "login"
 
 AUTHENTICATION_BACKENDS = [
     "axes.backends.AxesBackend",
-    "crm_app.backends.EmailBackend",
+    "crm_app.backends.EmailBackend", # Custom email authentication backend
+    "crm_app.backends.MicrosoftAuthenticationBackend", # New Microsoft authentication backend
     "django.contrib.auth.backends.ModelBackend",
 ]
 

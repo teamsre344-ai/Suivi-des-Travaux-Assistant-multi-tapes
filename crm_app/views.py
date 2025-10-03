@@ -45,6 +45,25 @@ from .models import (
 
 User = get_user_model()
 
+# List of allowed users for the dashboard
+ALLOWED_DASHBOARD_USERS = [
+    "patrick savard",
+    "jessyca lantagne",
+    "dounia elbaine",
+]
+
+def _is_allowed_dashboard_user(user) -> bool:
+    """
+    Checks if the given user is in the ALLOWED_DASHBOARD_USERS list.
+    Comparison is case-insensitive and ignores spaces.
+    """
+    if not user or not user.is_authenticated:
+        return False
+    
+    full_name = f"{user.first_name} {user.last_name}".lower()
+    print(f"DEBUG: Checking user '{full_name}' against ALLOWED_DASHBOARD_USERS: {ALLOWED_DASHBOARD_USERS}")
+    return full_name in ALLOWED_DASHBOARD_USERS
+
 # --------------------------------
 
 
@@ -191,8 +210,12 @@ def user_is_planification(user) -> bool:
 
 
 def user_is_deployment_specialist(user) -> bool:
-    role = (_dir_entry_for_user(user).get("role") or "").lower()
-    return ("spécialis" in role) or ("deploiement" in role) or ("déploiement" in role)
+    entry = _dir_entry_for_user(user)
+    role = (entry.get("role") or "").lower()
+    is_specialist = ("spécialis" in role) or ("deploiement" in role) or ("déploiement" in role)
+    full_name = f"{user.first_name} {user.last_name}".lower()
+    print(f"DEBUG: User '{full_name}' role: '{role}', is_deployment_specialist: {is_specialist}")
+    return is_specialist
 
 
 def _sync_user_and_technician_from_directory(
@@ -294,10 +317,56 @@ def login_view(request):
         if user:
             login(request, user)
             messages.success(request, "Connexion réussie.")
-            return redirect("home")
+            if user_is_manager(user):
+                return redirect("home")
+            return redirect("profile")
         else:
             messages.error(request, "E-mail ou mot de passe invalide.")
     return render(request, "login.html", {"form": form})
+
+
+def microsoft_login_view(request):
+    """
+    Initiates the Microsoft login flow by redirecting to the Microsoft authorization endpoint.
+    """
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    auth_url = (
+        f"{settings.MICROSOFT_AUTHORITY}/oauth2/v2.0/authorize?"
+        f"client_id={settings.MICROSOFT_APP_ID}&"
+        f"response_type=code&"
+        f"redirect_uri={settings.MICROSOFT_REDIRECT_URI}&"
+        f"response_mode=query&"
+        f"scope={' '.join(settings.MICROSOFT_SCOPE + ['openid', 'profile', 'email'])}"
+    )
+    return redirect(auth_url)
+
+
+def microsoft_callback_view(request):
+    """
+    Handles the callback from Microsoft after successful authentication.
+    Exchanges the authorization code for tokens and attempts to log in the user.
+    """
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    code = request.GET.get("code")
+    if not code:
+        messages.error(request, "Microsoft login failed: No authorization code received.")
+        return redirect("login")
+
+    user = authenticate(request, code=code)
+
+    if user:
+        login(request, user)
+        messages.success(request, "Connexion réussie avec Microsoft.")
+        if user_is_deployment_specialist(user):
+            return redirect("profile")
+        return redirect("home")
+    else:
+        messages.error(request, "Votre compte Microsoft n'est pas enregistré dans notre système. Accès refusé.")
+        return redirect("login")
 
 
 @login_required
@@ -703,9 +772,13 @@ def project_list_view(request):
             | Q(title__icontains=q)
             | Q(client_name__icontains=q)
             | Q(product__icontains=q)
+            | Q(ruleset__name__icontains=q)
             | Q(technician__user__first_name__icontains=q)
             | Q(technician__user__last_name__icontains=q)
-            | Q(ruleset__name__icontains=q)
+            | Q(technician__user__username__icontains=q)
+            | Q(created_by__first_name__icontains=q)
+            | Q(created_by__last_name__icontains=q)
+            | Q(created_by__username__icontains=q)
         )
 
     if created_by_me:
@@ -881,6 +954,19 @@ def _is_planner_or_manager(user) -> bool:
     return bool(getattr(tech, "is_manager", False) or "planification" in role)
 
 
+def unread_projects_count(request) -> int:
+    """
+    Returns the number of unread projects for the current user if they are a deployment specialist.
+    """
+    if not request.user.is_authenticated:
+        return 0
+    
+    if not user_is_deployment_specialist(request.user):
+        return 0
+
+    return Project.objects.filter(assigned_to=request.user, is_opened=False).count()
+
+
 @require_POST
 @login_required
 def project_form_save_section(request, pk=None):
@@ -958,6 +1044,10 @@ def project_create_view(request, pk=None):
 # ------------------ Detail ------------------
 @login_required
 def project_detail_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    if request.user == project.assigned_to and not project.is_opened:
+        project.is_opened = True
+        project.save(update_fields=['is_opened'])
     return redirect("project_update", pk=pk)
 
 

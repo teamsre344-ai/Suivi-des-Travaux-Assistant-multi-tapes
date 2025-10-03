@@ -165,33 +165,38 @@ def get_seed_user() -> models.Model:
 
 def ensure_technician(tech_field: models.ForeignKey) -> models.Model:
     TechModel = tech_field.remote_field.model
-    tech = TechModel.objects.first()
-    if tech:
-        return tech
+    technicians = list(TechModel.objects.all())
+    if not technicians:
+        # Create a few minimal Technicians bound to seed users
+        created_technicians = []
+        for i in range(5): # Create 5 technicians if none exist
+            user = get_seed_user()
+            user.username = f"seed.bot.{i}"
+            user.email = f"seed.bot.{i}@lgisolutions.com"
+            user.save()
 
-    # Create a minimal Technician bound to a seed user
-    user = get_seed_user()
-    fields = {f.name: f for f in TechModel._meta.fields}
-    kwargs = {}
+            fields = {f.name: f for f in TechModel._meta.fields}
+            kwargs = {}
 
-    # user OneToOne/ForeignKey
-    user_field_name = "user" if "user" in fields else None
-    if user_field_name:
-        kwargs[user_field_name] = user
+            user_field_name = "user" if "user" in fields else None
+            if user_field_name:
+                kwargs[user_field_name] = user
 
-    # optional fields commonly present
-    if "role" in fields and isinstance(fields["role"], models.CharField):
-        kwargs["role"] = "Spécialiste, déploiement des solutions"
-    if (
-        "job_title" in fields
-        and isinstance(fields["job_title"], models.CharField)
-        and "role" not in kwargs
-    ):
-        kwargs["job_title"] = "Spécialiste, déploiement des solutions"
-    if "is_manager" in fields and isinstance(fields["is_manager"], models.BooleanField):
-        kwargs["is_manager"] = False
+            if "role" in fields and isinstance(fields["role"], models.CharField):
+                kwargs["role"] = "Spécialiste, déploiement des solutions"
+            if (
+                "job_title" in fields
+                and isinstance(fields["job_title"], models.CharField)
+                and "role" not in kwargs
+            ):
+                kwargs["job_title"] = "Spécialiste, déploiement des solutions"
+            if "is_manager" in fields and isinstance(fields["is_manager"], models.BooleanField):
+                kwargs["is_manager"] = False
+            
+            created_technicians.append(TechModel.objects.create(**kwargs))
+        technicians = created_technicians
 
-    return TechModel.objects.create(**kwargs)
+    return random.choice(technicians)
 
 
 class Command(BaseCommand):
@@ -249,29 +254,17 @@ class Command(BaseCommand):
 
         # enums / choices
         status_field = "status" if "status" in proj_fields else None
-        status_value = (
-            pick_from_choices(
-                proj_fields[status_field], ["IN_PROGRESS", "PLANNING", "ON_HOLD"]
-            )
-            if status_field
-            else None
-        )
+        status_value_choices = [value for value, _ in proj_fields[status_field].choices] if status_field and getattr(proj_fields[status_field], "choices", None) else []
         phase_field = "phase" if "phase" in proj_fields else None
-        phase_value = (
-            pick_from_choices(
-                proj_fields[phase_field], ["PLANNING", "EXECUTION", "CLOSURE"]
-            )
-            if phase_field
-            else None
-        )
+        phase_value_choices = [value for value, _ in proj_fields[phase_field].choices] if phase_field and getattr(proj_fields[phase_field], "choices", None) else []
         priority_field = "priority" if "priority" in proj_fields else None
-        priority_value = (
-            pick_from_choices(proj_fields[priority_field], ["MEDIUM", "NORMAL", "HIGH"])
-            if priority_field
-            else None
-        )
+        priority_value_choices = [value for value, _ in proj_fields[priority_field].choices] if priority_field and getattr(proj_fields[priority_field], "choices", None) else []
 
         environment_field = "environment" if "environment" in proj_fields else None
+        environment_value_choices = [value for value, _ in proj_fields[environment_field].choices] if environment_field and getattr(proj_fields[environment_field], "choices", None) else []
+
+        version_actuelle_field = "version_actuelle" if "version_actuelle" in proj_fields else None
+        version_cible_field = "version_cible" if "version_cible" in proj_fields else None
 
         # product can be FK or CharField
         product_field_name = "product" if "product" in proj_fields else None
@@ -315,10 +308,10 @@ class Command(BaseCommand):
 
         target_count = int(opts["count"])
         seq = int(opts["start"])
-        created_count = 0
+        created_projects = []
         used_titles = set()
 
-        while created_count < target_count:
+        while len(created_projects) < target_count:
             prj_no = f"PRJ{seq:04d}"
             seq += 1
 
@@ -386,22 +379,28 @@ class Command(BaseCommand):
             if created_by_field:
                 data[created_by_field] = get_seed_user()
 
-            if status_field and status_value is not None:
-                data[status_field] = status_value
-            if phase_field and phase_value is not None:
-                data[phase_field] = phase_value
-            if priority_field and priority_value is not None:
-                data[priority_field] = priority_value
+            if status_field and status_value_choices:
+                data[status_field] = random.choice(status_value_choices)
+            if phase_field and phase_value_choices:
+                data[phase_field] = random.choice(phase_value_choices)
+            if priority_field and priority_value_choices:
+                data[priority_field] = random.choice(priority_value_choices)
+
+            if environment_field and environment_value_choices:
+                data[environment_field] = random.choice(environment_value_choices)
+
+            if version_actuelle_field:
+                data[version_actuelle_field] = f"{random.randint(1, 5)}.{random.randint(0, 9)}"
+            if version_cible_field:
+                data[version_cible_field] = f"{random.randint(6, 10)}.{random.randint(0, 9)}"
 
             if technician_field:
-                data[technician_field] = ensure_technician(
-                    proj_fields[technician_field]
-                )
+                data[technician_field] = ensure_technician(proj_fields[technician_field])
 
-            Project.objects.create(**data)
-            created_count += 1
+            created_projects.append(Project(**data))
             self.stdout.write(f" + {prj_no} · {title_value}")
 
+        Project.objects.bulk_create(created_projects)
         self.stdout.write(
-            self.style.SUCCESS(f"Done. Created {created_count} projects.")
+            self.style.SUCCESS(f"Done. Created {len(created_projects)} projects.")
         )

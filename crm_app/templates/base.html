@@ -23,6 +23,7 @@
 
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=5" />
   <link rel="stylesheet" href="{% static 'css/team_dashboard.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/light_mode.css' %}" />
 
   <!-- Small utility CSS (no @apply so it works with CDN) -->
   <style>
@@ -94,7 +95,7 @@
             </form>
         </div>
 
-        <!-- RIGHT: Profile chip (no name) + Logout -->
+        <!-- RIGHT: Profile chip (click to open /profile/) -->
         <div class="flex items-center justify-end gap-4">
 
           <!-- Profile chip (click to open /profile/) -->
@@ -152,11 +153,49 @@
     <div class="tw-container px-4 py-4 text-sm text-gray-400 flex items-center justify-between">
       <span>&copy; {{ now|date:"Y" }}LGI Healthcare Solutions | LGI Solutions Santé </span>
       <div class="space-x-3">
+        <button id="theme-toggle" class="hover:text-blue-400 focus:outline-none">
+          <i class="fa-solid fa-sun text-lg" id="theme-icon"></i>
+        </button>
         <a class="hover:text-blue-400" href="https://www.linkedin.com/company/lgisolutions/about/"><i class="fa-brands fa-linkedin"></i></a>
       </div>
     </div>
   </footer>
 
   <script src="{% static 'js/main.js' %}"></script>
+  <script>
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const body = document.body;
+
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      body.classList.add(savedTheme);
+      if (savedTheme === 'light-mode') {
+        themeIcon.classList.remove('fa-sun');
+        themeIcon.classList.add('fa-moon');
+      }
+    } else {
+      // Default to dark mode if no preference is saved
+      body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark-mode');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      if (body.classList.contains('light-mode')) {
+        body.classList.remove('light-mode');
+        body.classList.add('dark-mode');
+        themeIcon.classList.remove('fa-moon');
+        themeIcon.classList.add('fa-sun');
+        localStorage.setItem('theme', 'dark-mode');
+      } else {
+        body.classList.remove('dark-mode');
+        body.classList.add('light-mode');
+        themeIcon.classList.remove('fa-sun');
+        themeIcon.classList.add('fa-moon');
+        localStorage.setItem('theme', 'light-mode');
+      }
+    });
+  </script>
 </body>
 </html>

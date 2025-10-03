@@ -1,0 +1,312 @@
+/* Light mode styles */
+
+body.light-mode {
+  background: #f0f2f5; /* Light grey background */
+  color: #333; /* Darker text for contrast */
+  position: relative;
+}
+
+body.light-mode::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.8), rgba(200, 200, 200, 0.8));
+  animation: none; /* Disable gradient animation for light mode */
+  z-index: -1;
+}
+
+body.light-mode .radial-background {
+  background: #f0f2f5; /* Light grey background */
+  color: #333; /* Darker text for contrast */
+}
+
+body.light-mode .radial-background::before {
+  background: none;
+}
+
+body.light-mode .tw-container {
+  background-color: #ffffff !important;
+}
+
+body.light-mode .kpi-card {
+  color: #333;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .kpi-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .kpi-card--total {
+  background-image: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); /* Blue gradient */
+  color: #ffffff; /* White text */
+}
+
+body.light-mode .kpi-card--total::after {
+    border: 8px solid rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .kpi-card--pending {
+  background-image: linear-gradient(120deg, #ffe0b2 0%, #ffcc80 100%);
+  color: #e65100;
+}
+
+body.light-mode .kpi-card--pending .font-bold {
+  color: #bf360c;
+}
+
+body.light-mode .kpi-card--pending::after {
+    background: #ffecb3;
+    opacity: 0.6;
+}
+
+body.light-mode .kpi-card--in-progress {
+  background-image: linear-gradient(120deg, #b2dfdb 0%, #80cbc4 100%);
+  color: #004d40;
+}
+
+body.light-mode .kpi-card--in-progress .font-bold {
+  color: #00251a;
+}
+
+body.light-mode .kpi-card--in-progress::after {
+    background: rgba(0,0,0,0.1);
+    color: #00897b;
+}
+
+body.light-mode .kpi-card--completed {
+  background-image: linear-gradient(120deg, #a7ffeb 0%, #64ffda 100%);
+  color: #004d40;
+}
+
+body.light-mode .kpi-card--completed .font-bold {
+  color: #00251a;
+}
+
+body.light-mode .kpi-card--completed::after {
+    background: rgba(0,0,0,0.1);
+    color: #00bfa5;
+}
+
+body.light-mode .product-distribution-card,
+body.light-mode .activity-card,
+body.light-mode .table-container,
+body.light-mode .quick-action-card,
+body.light-mode .card {
+  background-color: #ffffff;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  color: #333;
+}
+
+body.light-mode .activity-card h3,
+body.light-mode .activity-card a,
+body.light-mode .table-container h3,
+body.light-mode .table-container a,
+body.light-mode .quick-action-card h4,
+body.light-mode .card__title,
+body.light-mode h1 {
+    color: #333 !important;
+}
+
+body.light-mode .activity-card .text-gray-500,
+body.light-mode .quick-action-card p,
+body.light-mode .table-container th,
+body.light-mode .table-container tbody tr td,
+body.light-mode footer .text-gray-500 {
+    color: #666 !important;
+}
+
+body.light-mode .activity-card .text-gray-800 {
+    color: #333 !important;
+}
+
+body.light-mode #worktypeDonutLegend .text-gray-600,
+body.light-mode #worktypeDonutLegend .text-gray-800 {
+    color: #333 !important;
+}
+
+body.light-mode .quick-action-card .bg-blue-200 { background-color: #bfdbfe !important; }
+body.light-mode .quick-action-card .text-blue-600 { color: #2563eb !important; }
+body.light-mode .quick-action-card .bg-purple-200 { background-color: #e9d5ff !important; }
+body.light-mode .quick-action-card .text-purple-600 { color: #a855f7 !important; }
+body.light-mode .quick-action-card .bg-green-200 { background-color: #dcfce7 !important; }
+body.light-mode .quick-action-card .text-green-600 { color: #22c55e !important; }
+
+body.light-mode .table-container tbody tr {
+    background-color: #f9fafb !important;
+}
+
+body.light-mode .table-container tbody tr:hover {
+    background-color: #f0f2f5 !important;
+}
+
+body.light-mode .table-container .text-blue-600 {
+    color: #2563eb !important;
+}
+
+body.light-mode .table-container .bg-blue-100 {
+    background-color: #dbeafe !important;
+    color: #2563eb !important;
+}
+
+body.light-mode .table-container .bg-gray-200 {
+    background-color: #e2e8f0 !important;
+}
+
+body.light-mode .product-item {
+    background-image: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); /* Blue gradient */
+    color: #ffffff; /* White text */
+}
+
+body.light-mode .product-item:hover {
+    background-image: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); /* Darker blue on hover */
+}
+
+body.light-mode .product-item span {
+    color: #ffffff !important; /* White text */
+}
+
+body.light-mode header .tw-container,
+body.light-mode footer .tw-container {
+    background: #ffffff !important;
+    color: #333;
+}
+
+body.light-mode header .text-gray-800,
+body.light-mode header .text-gray-700,
+body.light-mode header .text-gray-500 {
+    color: #333 !important;
+}
+
+body.light-mode header .bg-gray-50 {
+    background-color: #f9fafb !important;
+}
+
+body.light-mode header .border-gray-200 {
+    border-color: #e2e8f0 !important;
+}
+
+body.light-mode .form-section {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.light-mode .form-section label {
+    color: #333 !important;
+}
+
+body.light-mode .form-section input,
+body.light-mode .form-section select,
+body.light-mode .form-section textarea {
+    background-color: #f9fafb !important;
+    border-color: #e2e8f0 !important;
+    color: #333 !important;
+}
+
+body.light-mode .form-section input::placeholder,
+body.light-mode .form-section textarea::placeholder {
+    color: #666 !important;
+}
+
+body.light-mode .form-section .bg-blue-50 {
+    background-color: #e0e7ff !important;
+    border-color: #93c5fd !important;
+}
+
+body.light-mode .form-section .text-blue-800 {
+    color: #2563eb !important;
+}
+
+body.light-mode .form-section .bg-gradient-to-br {
+    background-image: none !important;
+    background-color: #dcfce7 !important;
+    border-color: #86efac !important;
+}
+
+body.light-mode .form-section .text-green-800 {
+    color: #22c55e !important;
+}
+
+body.light-mode .menu-item {
+    color: #666 !important;
+}
+
+body.light-mode .menu-item.active {
+    color: #333 !important;
+    border-bottom-color: #333 !important;
+}
+
+body.light-mode .card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+body.light-mode .card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .card__title {
+  color: #333;
+}
+
+body.light-mode header a .text-2xl.font-bold.tracking-tight.text-white {
+  color: #2563eb !important; /* Tailwind's blue-600 */
+}
+
+body.light-mode .phase-card {
+  background: #f0f2f5;
+}
+
+body.light-mode .elevated-card,
+body.light-mode .pagination-container,
+body.light-mode .elevated-table-header {
+  background: #ffffff !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.1) inset !important;
+}
+
+body.light-mode .badge {
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
+}
+
+body.light-mode .content-card input[type="text"],
+body.light-mode .content-card input[type="date"],
+body.light-mode .content-card select {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+    color: #333;
+}
+
+body.light-mode .content-card input::placeholder {
+    color: #666;
+}
+
+body.light-mode .content-card label {
+    color: #333;
+}
+
+body.light-mode .content-card select option {
+    background: #ffffff;
+    color: #333;
+}
+
+/* Styles for the Microsoft Login Popup Modal */
+#microsoft-login-popup {
+  z-index: 1000; /* Ensure it's on top of other content */
+}
+
+#microsoft-login-popup .relative {
+  transform: translateY(0); /* Reset transform for modal positioning */
+  transition: transform 0.3s ease-out;
+}
+
+#microsoft-login-popup.hidden .relative {
+  transform: translateY(-100%); /* Animate out of view */
+}

@@ -92,6 +92,14 @@
         </button>
       </form>
 
+      <div class="mt-6 text-center">
+        <a href="{% url 'microsoft_login' %}"
+          class="w-full rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 transition flex items-center justify-center gap-2 px-4 py-2 shadow-sm">
+          <img src="{% static 'img/microsoft_logo.svg' %}" alt="Microsoft Icon" class="h-5 w-5">
+          <span>Sign in with Microsoft</span>
+        </a>
+      </div>
+
       <p class="text-xs text-gray-400 mt-6">
         Utilisateurs internes : utilisez votre adresse <span class="font-medium">@lgisolutions.com</span>.
       </p>

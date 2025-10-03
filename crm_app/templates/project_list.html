@@ -154,21 +154,21 @@
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr class="elevated-table-header text-left text-xs font-semibold text-gray-600 uppercase tracking-wider radial-background">
-          <th class="px-4 py-2">Numéro</th>
+          <th class="px-4 py-2 w-40">Numéro</th>
           <th class="px-4 py-2">Client</th>
           <th class="px-4 py-2">Produit</th>
           <th class="px-4 py-2">Env.</th>
           <th class="px-4 py-2">Technicien</th>
           <th class="px-4 py-2">Statut</th>
-          <th class="px-4 py-2">Progression</th>
+          <th class="px-4 py-2 w-56">Progression</th>
           <th class="px-4 py-2">Créé le</th>
-          <th class="px-4 py-2"></th>
+          <th class="px-4 py-2">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         {% for p in projects %}
         <tr class="hover:bg-gray-50">
-          <td class="px-4 py-2">
+          <td class="px-4 py-2 w-40">
             <div class="text-blue-600 font-medium">{{ p.project_number }}</div>
             <div class="text-xs text-gray-500">{{ p.title|default:"—" }}</div>
           </td>
@@ -187,19 +187,9 @@
             {% endif %}
           </td>
           <td class="px-4 py-2">
-            {% if p.status == 'completed' %}
-              <span class="badge bg-green-100 text-green-800">Terminé</span>
-            {% elif p.status == 'in_progress' %}
-              <span class="badge bg-blue-100 text-blue-800">En cours</span>
-            {% elif p.status == 'pending' %}
-              <span class="badge bg-amber-100 text-amber-800">En attente</span>
-            {% elif p.status == 'on_hold' %}
-              <span class="badge bg-gray-200 text-gray-800">En pause</span>
-            {% elif p.status == 'cancelled' %}
-              <span class="badge bg-red-100 text-red-800">Annulé</span>
-            {% else %}
-              <span class="badge bg-gray-100 text-gray-700">{{ p.status }}</span>
-            {% endif %}
+            <span class="badge {% if p.status == 'completed' %}bg-green-100 text-green-800{% elif p.status == 'in_progress' %}bg-blue-100 text-blue-800{% elif p.status == 'pending' %}bg-amber-100 text-amber-800{% elif p.status == 'on_hold' %}bg-gray-200 text-gray-800{% elif p.status == 'cancelled' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-700{% endif %}">
+              {{ p.get_status_display }}
+            </span>
           </td>
           <td class="px-4 py-2 w-56">
             <div class="h-2 bg-gray-200 rounded">

@@ -179,6 +179,7 @@ body {
     background-color: transparent;
     box-shadow: none;
     color: white;
+    padding: 1.5rem; /* Added consistent padding */
 }
 
 .activity-card h3, .activity-card a {

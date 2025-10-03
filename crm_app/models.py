@@ -205,6 +205,7 @@ class Project(models.Model):
     checklist_data = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_opened = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-created_at"]
