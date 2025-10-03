@@ -40,7 +40,7 @@
   </style>
 </head>
 
-<body class="radial-background flex flex-col min-h-screen">
+<body class="light-mode flex flex-col min-h-screen">
   <!-- HEADER / NAV -->
   <header class="sticky top-0 z-40">
     <div class="tw-container px-6">
@@ -53,25 +53,25 @@
             <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg">
               <i class="fa-solid fa-chart-simple text-xl"></i>
             </span>
-            <span class="text-2xl font-bold tracking-tight text-white">SRE Track</span>
+            <span class="text-2xl font-bold tracking-tight text-blue-600">SRE Track</span>
           </a>
 
           <!-- Nav -->
           {% with url_name=request.resolver_match.url_name %}
           <nav class="hidden md:flex items-center gap-8 text-lg">
             <a href="{% url 'home' %}"
-               class="transition hover:text-blue-400 {% if url_name == 'home' %}text-blue-400 font-semibold{% else %}text-gray-300{% endif %}">
+               class="transition hover:text-blue-600 {% if url_name == 'home' %}text-blue-600 font-semibold{% else %}text-gray-600{% endif %}">
               Tableau de bord
             </a>
 
             <a href="{% url 'project_list' %}"
-               class="transition hover:text-blue-400 {% if url_name == 'project_list' %}text-blue-400 font-semibold{% else %}text-gray-300{% endif %}">
+               class="transition hover:text-blue-600 {% if url_name == 'project_list' %}text-blue-600 font-semibold{% else %}text-gray-600{% endif %}">
               Projets
             </a>
 
             {% if technician and technician.is_manager %}
             <a href="{% url 'team_dashboard' %}"
-               class="transition hover:text-blue-400 {% if url_name == 'team_dashboard' %}text-blue-400 font-semibold{% else %}text-gray-300{% endif %}">
+               class="transition hover:text-blue-600 {% if url_name == 'team_dashboard' %}text-blue-600 font-semibold{% else %}text-gray-600{% endif %}">
               Équipe
             </a>
             {% endif %}
@@ -83,13 +83,13 @@
         <div class="flex-grow flex items-center justify-center px-8">
             <form action="{% url 'search' %}" method="get" class="w-full max-w-md">
                 <div class="relative flex items-center">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-500"></i>
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-400"></i>
                     <input
                         type="text"
                         name="q"
                         value="{{ request.GET.q|default_if_none:'' }}"
                         placeholder="Rechercher : projet, membre, produit…"
-                        class="w-full h-12 pl-11 pr-4 rounded-full border border-gray-700 bg-gray-800 text-white placeholder-gray-500 hover:bg-gray-700 focus:bg-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition"
+                        class="w-full h-12 pl-11 pr-4 rounded-full border border-gray-300 bg-white text-gray-900 placeholder-gray-400 hover:border-gray-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition"
                         autocomplete="off" />
                 </div>
             </form>
@@ -116,7 +116,7 @@
 
           <!-- Logout -->
           <a href="{% url 'logout' %}"
-             class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-gray-700 text-gray-400 hover:text-white hover:bg-gray-700 transition"
+             class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition"
              title="Se déconnecter" aria-label="Se déconnecter">
             <i class="fa-solid fa-right-from-bracket text-lg"></i>
           </a>
@@ -153,49 +153,11 @@
     <div class="tw-container px-4 py-4 text-sm text-gray-400 flex items-center justify-between">
       <span>&copy; {{ now|date:"Y" }}LGI Healthcare Solutions | LGI Solutions Santé </span>
       <div class="space-x-3">
-        <button id="theme-toggle" class="hover:text-blue-400 focus:outline-none">
-          <i class="fa-solid fa-sun text-lg" id="theme-icon"></i>
-        </button>
         <a class="hover:text-blue-400" href="https://www.linkedin.com/company/lgisolutions/about/"><i class="fa-brands fa-linkedin"></i></a>
       </div>
     </div>
   </footer>
 
   <script src="{% static 'js/main.js' %}"></script>
-  <script>
-    const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = document.getElementById('theme-icon');
-    const body = document.body;
-
-    // Check for saved theme preference
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      body.classList.add(savedTheme);
-      if (savedTheme === 'light-mode') {
-        themeIcon.classList.remove('fa-sun');
-        themeIcon.classList.add('fa-moon');
-      }
-    } else {
-      // Default to dark mode if no preference is saved
-      body.classList.add('dark-mode');
-      localStorage.setItem('theme', 'dark-mode');
-    }
-
-    themeToggle.addEventListener('click', () => {
-      if (body.classList.contains('light-mode')) {
-        body.classList.remove('light-mode');
-        body.classList.add('dark-mode');
-        themeIcon.classList.remove('fa-moon');
-        themeIcon.classList.add('fa-sun');
-        localStorage.setItem('theme', 'dark-mode');
-      } else {
-        body.classList.remove('dark-mode');
-        body.classList.add('light-mode');
-        themeIcon.classList.remove('fa-sun');
-        themeIcon.classList.add('fa-moon');
-        localStorage.setItem('theme', 'light-mode');
-      }
-    });
-  </script>
 </body>
 </html>
