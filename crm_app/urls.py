@@ -25,6 +25,11 @@ urlpatterns = [
         name="project_phase_update",
     ),
     path(
+        "projects/<int:pk>/switch-environment/",
+        views.project_switch_environment_view,
+        name="project_switch_environment",
+    ),
+    path(
         "projects/<int:pk>/checklist/import/",
         views.checklist_import_view,
         name="checklist_import",

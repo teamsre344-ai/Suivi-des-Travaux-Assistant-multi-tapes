@@ -268,6 +268,22 @@ TEAM_DIRECTORY = {
     },
 }
 
+# --- Dashboard Restricted Users (redirect to profile instead) ---
+DASHBOARD_RESTRICTED_USERS = [
+    "mahmoud.feki@lgisolutions.com",
+    "ruben.geghamyan@lgisolutions.com",
+    "eric.lamontagne@lgisolutions.com",
+    "frederic.rousseau@lgisolutions.com",
+    "eric.champagne@lgisolutions.com",
+    "marc.banville@lgisolutions.com",
+    "halimatou.ly@lgisolutions.com",
+    "romeo.kutnjem@lgisolutions.com",
+    "sylvain.berthiaume@lgisolutions.com",
+    "masamba.lema@lgisolutions.com",
+    "taoufik.toughrai@lgisolutions.com",
+    "frank.binde@lgisolutions.com",
+]
+
 # --- Optional: basic hardening when DEBUG=False ---
 # --- Debug Toolbar ---
 INTERNAL_IPS = ["127.0.0.1"]

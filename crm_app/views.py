@@ -218,6 +218,15 @@ def user_is_deployment_specialist(user) -> bool:
     return is_specialist
 
 
+def user_is_dashboard_restricted(user) -> bool:
+    """
+    Check if user should be restricted from dashboard and redirected to profile.
+    """
+    from django.conf import settings
+    restricted_emails = getattr(settings, 'DASHBOARD_RESTRICTED_USERS', [])
+    return user.email.lower() in [email.lower() for email in restricted_emails]
+
+
 def _sync_user_and_technician_from_directory(
     user: Optional[User],
 ) -> Optional[Technician]:
@@ -317,6 +326,10 @@ def login_view(request):
         if user:
             login(request, user)
             messages.success(request, "Connexion réussie.")
+            # Redirect restricted users to profile
+            if user_is_dashboard_restricted(user):
+                return redirect("profile")
+            # Redirect managers to dashboard
             if user_is_manager(user):
                 return redirect("home")
             return redirect("profile")
@@ -361,6 +374,10 @@ def microsoft_callback_view(request):
     if user:
         login(request, user)
         messages.success(request, "Connexion réussie avec Microsoft.")
+        # Redirect restricted users to profile
+        if user_is_dashboard_restricted(user):
+            return redirect("profile")
+        # Redirect deployment specialists to profile
         if user_is_deployment_specialist(user):
             return redirect("profile")
         return redirect("home")
@@ -378,6 +395,11 @@ def logout_view(request):
 # ------------------ Dashboard ------------------
 @login_required
 def home_view(request):
+    # Redirect restricted users to their profile page
+    if user_is_dashboard_restricted(request.user):
+        messages.info(request, "Vous n'avez pas accès au tableau de bord. Redirection vers votre profil.")
+        return redirect("profile")
+
     tech = _sync_user_and_technician_from_directory(request.user)
     is_manager = getattr(tech, "is_manager", False)
     projects = (
@@ -1084,6 +1106,38 @@ def team_dashboard_view(request):
         team.append({"tech": t, "pct": pct, "recent": recent})
 
     return render(request, "team_dashboard.html", {"team": team, "technician": tech})
+
+
+# ------------------ Environment Switch ------------------
+@require_POST
+@login_required
+def project_switch_environment_view(request, pk):
+    """
+    Switch project environment from Test to Prod or vice versa.
+    Only managers can switch to Prod.
+    """
+    tech = _sync_user_and_technician_from_directory(request.user)
+    is_manager = getattr(tech, "is_manager", False)
+
+    if is_manager:
+        project = get_object_or_404(Project, pk=pk)
+    else:
+        project = get_object_or_404(Project, pk=pk, technician=tech)
+
+    # Switch environment
+    if project.environment == 'test':
+        # Only managers can switch to production
+        if not is_manager:
+            messages.error(request, "Seuls les gestionnaires peuvent passer un projet en Production.")
+            return redirect("project_detail", pk=pk)
+        project.environment = 'prod'
+        messages.success(request, f"Projet {project.project_number} passé en Production.")
+    else:
+        project.environment = 'test'
+        messages.success(request, f"Projet {project.project_number} passé en Test.")
+
+    project.save()
+    return redirect("project_detail", pk=pk)
 
 
 # ------------------ Phase updates ------------------

@@ -185,30 +185,9 @@ class ProjectForm(forms.ModelForm):
         widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
     )
     prod_date = forms.DateField(
-        label="Date de production",
+        label="Date d'exécution",
         required=False,
         widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-    )
-
-    prep_start_time = forms.TimeField(
-        label="Heure début (préparation)",
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
-    )
-    prep_end_time = forms.TimeField(
-        label="Heure fin (préparation)",
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
-    )
-    prod_start_time = forms.TimeField(
-        label="Heure début (production)",
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
-    )
-    prod_end_time = forms.TimeField(
-        label="Heure fin (production)",
-        required=False,
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
     )
 
     class Meta:
@@ -250,11 +229,7 @@ class ProjectForm(forms.ModelForm):
             # NEW: planning board + planning windows (visible if you include them in template)
             "coordination_board",
             "prep_date",
-            "prep_start_time",
-            "prep_end_time",
             "prod_date",
-            "prod_start_time",
-            "prod_end_time",
         ]
         widgets = {
             "note_importante": forms.Textarea(attrs={"rows": 3}),

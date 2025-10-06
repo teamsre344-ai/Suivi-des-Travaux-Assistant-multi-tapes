@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="{% static 'css/coordination_form.css' %}" />
 </head>
 
-<body class="radial-background">
+<body class="bg-gray-50">
   <!-- HEADER / NAV -->
   <header class="sticky top-0 z-40 bg-white/80 backdrop-blur">
     <div class="tw-container px-6">
@@ -153,6 +153,10 @@
               {{ form.product }}
             </div>
             <div class="field">
+              <label for="{{ form.environment.id_for_label }}">Environnement</label>
+              {{ form.environment }}
+            </div>
+            <div class="field">
               <label for="{{ form.technician.id_for_label }}">Spécialiste déploiement assigné</label>
               {{ form.technician }}
             </div>
@@ -168,37 +172,21 @@
         </div>
 
         <div class="card card-delivery">
-          <h2 class="card__title"><i class="fa-solid fa-calendar-check"></i> Délais de livraison</h2>
+          <h2 class="card__title"><i class="fa-solid fa-calendar-check"></i> Préparation</h2>
           <div class="row-3">
             <div class="field">
               <label for="{{ form.prep_date.id_for_label }}">Date</label>
               {{ form.prep_date }}
             </div>
-            <div class="field">
-              <label for="{{ form.prep_start_time.id_for_label }}">Début</label>
-              {{ form.prep_start_time }}
-            </div>
-            <div class="field">
-              <label for="{{ form.prep_end_time.id_for_label }}">Fin</label>
-              {{ form.prep_end_time }}
-            </div>
           </div>
         </div>
 
         <div class="card card-production">
-          <h2 class="card__title"><i class="fa-solid fa-cogs"></i> Production</h2>
+          <h2 class="card__title"><i class="fa-solid fa-cogs"></i> Exécution</h2>
           <div class="row-3">
             <div class="field">
               <label for="{{ form.prod_date.id_for_label }}">Date</label>
               {{ form.prod_date }}
-            </div>
-            <div class="field">
-              <label for="{{ form.prod_start_time.id_for_label }}">Début</label>
-              {{ form.prod_start_time }}
-            </div>
-            <div class="field">
-              <label for="{{ form.prod_end_time.id_for_label }}">Fin</label>
-              {{ form.prod_end_time }}
             </div>
           </div>
         </div>

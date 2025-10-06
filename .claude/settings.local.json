@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose:*)",
+      "Bash(timeout 5 curl -s http://localhost:8000)",
+      "Bash(curl:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Remove dark mode and set light mode as default theme\n\n- Removed dark mode toggle button from footer\n- Updated body class to use light-mode by default\n- Replaced dark radial gradient background with light theme\n- Updated all card backgrounds to white with proper shadows\n- Changed text colors from white to dark for better contrast\n- Updated header navigation colors (blue-600 for brand, gray-600 for links)\n- Modified search bar styling for light theme\n- Updated KPI cards with light mode color palette\n- Fixed table, form, and input styling for light backgrounds\n- Changed product items and badges to light theme colors\n\nAll UI elements now use the professional light mode design with blue accents.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -169,7 +169,14 @@
         {% for p in projects %}
         <tr class="hover:bg-gray-50">
           <td class="px-4 py-2 w-40">
-            <div class="text-blue-600 font-medium">{{ p.project_number }}</div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-blue-600 font-medium">{{ p.project_number }}</span>
+              {% if p.environment == 'test' %}
+                <span class="badge" style="background-color: #3b82f6; color: white; font-size: 0.65rem; padding: 2px 6px;">TEST</span>
+              {% else %}
+                <span class="badge" style="background-color: #22c55e; color: white; font-size: 0.65rem; padding: 2px 6px;">PROD</span>
+              {% endif %}
+            </div>
             <div class="text-xs text-gray-500">{{ p.title|default:"—" }}</div>
           </td>
           <td class="px-4 py-2">{{ p.client_name|default:"—" }}</td>
